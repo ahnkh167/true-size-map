@@ -71,6 +71,15 @@
   #active-info .wiki-link { display: inline-block; margin-top: 8px; font-size: 11px; color: #3366bb; text-decoration: none; }
   #active-info .wiki-link:hover { text-decoration: underline; }
   #active-info .info-loading { color: #999; font-size: 11px; margin-top: 6px; }
+  #active-info .wiki-extract {
+    margin-top: 8px; padding-top: 8px; border-top: 1px solid #ececec;
+    font-size: 11px; color: #444; line-height: 1.4; max-height: 110px; overflow-y: auto;
+  }
+  #active-info .wiki-extract .wiki-thumb {
+    float: right; margin: 0 0 4px 6px; width: 56px; max-height: 64px;
+    object-fit: cover; border: 1px solid #e0e0e0; border-radius: 3px;
+  }
+  #active-info .wiki-ko-name { color: #888; font-weight: normal; font-size: 11px; margin-left: 4px; }
   #controls {
     margin-top: 10px;
     display: grid;
@@ -790,9 +799,9 @@
     { nameProp: 'SUBUNIT', filter: f => (f.properties.ADM0_A3 === 'GBR' || f.properties.SOV_A3 === 'GB1') }
   );
 
-  // ALL OTHER COUNTRIES: Natural Earth admin-1 (~4400 features). One fetch.
+  // ALL OTHER COUNTRIES: Natural Earth admin-1 (~4400 features, 2.2 MB). jsDelivr CDN for speed + caching.
   loadGlobalSubdivisions(
-    'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_1_states_provinces.geojson',
+    'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_1_states_provinces.geojson',
     ['US', 'CA', 'MX', 'BR', 'JP', 'CN', 'KR', 'AU', 'GB']
   );
 
@@ -904,6 +913,71 @@
     return `https://en.wikipedia.org/wiki/${encodeURIComponent(name.replace(/ /g, '_'))}`;
   }
 
+  // Wikipedia info: tries Korean wiki first via langlinks, falls back to English.
+  // Returns { extract, koTitle, thumbnail, pageUrl, lang } or null.
+  const wikiCache = {};
+  async function fetchWiki(name) {
+    if (wikiCache[name]) return wikiCache[name];
+    try {
+      // Step 1: ask English Wikipedia for the Korean langlink
+      let koTitle = null;
+      try {
+        const llRes = await fetch(
+          `https://en.wikipedia.org/w/api.php?action=query&prop=langlinks&lllang=ko&titles=${encodeURIComponent(name)}&format=json&origin=*&redirects=1`
+        );
+        const llData = await llRes.json();
+        const pages = llData.query && llData.query.pages;
+        if (pages) {
+          const first = pages[Object.keys(pages)[0]];
+          if (first && first.langlinks && first.langlinks[0]) koTitle = first.langlinks[0]['*'];
+        }
+      } catch {}
+
+      // Step 2: fetch summary (Korean if we have it, else English)
+      const useTitle = koTitle || name;
+      const lang = koTitle ? 'ko' : 'en';
+      const sRes = await fetch(
+        `https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(useTitle.replace(/ /g, '_'))}?redirect=true`
+      );
+      if (!sRes.ok) throw 0;
+      const s = await sRes.json();
+      const out = {
+        koTitle, lang,
+        title: s.title,
+        description: s.description,
+        extract: s.extract,
+        thumbnail: s.thumbnail && s.thumbnail.source,
+        pageUrl: s.content_urls && s.content_urls.desktop && s.content_urls.desktop.page
+      };
+      wikiCache[name] = out;
+      return out;
+    } catch { return null; }
+  }
+
+  async function appendWikiInfo(name, layer) {
+    const wiki = await fetchWiki(name);
+    if (!wiki || activeLayer !== layer) return;
+    const extract = wiki.extract;
+    if (!extract) return;
+    // Insert wiki block before the existing wiki link
+    const existing = activeInfoEl.querySelector('.wiki-extract');
+    if (existing) existing.remove();
+    const block = document.createElement('div');
+    block.className = 'wiki-extract';
+    block.innerHTML =
+      (wiki.thumbnail ? `<img class="wiki-thumb" src="${wiki.thumbnail}" alt="">` : '') +
+      (wiki.koTitle ? `<b>${wiki.koTitle}</b><br>` : `<b>${wiki.title}</b><br>`) +
+      `${extract}`;
+    const linkEl = activeInfoEl.querySelector('.wiki-link');
+    if (linkEl) {
+      linkEl.parentNode.insertBefore(block, linkEl);
+      // Update the link to point to the actual page (Korean if available)
+      if (wiki.pageUrl) linkEl.href = wiki.pageUrl;
+    } else {
+      activeInfoEl.appendChild(block);
+    }
+  }
+
   const fmtNum = (n) => (n == null ? '-' : Number(n).toLocaleString());
 
   async function renderActiveInfo(layer) {
@@ -952,6 +1026,7 @@
       }
       activeInfoEl.innerHTML = head + body +
         `<a class="wiki-link" href="${wikiUrl(meta.name)}" target="_blank" rel="noopener">위키백과에서 보기 · View on Wikipedia ↗</a>`;
+      appendWikiInfo(meta.name, layer);
       return;
     }
 
@@ -980,6 +1055,7 @@
       </div>
       <a class="wiki-link" href="${wikiUrl(wikiName)}" target="_blank" rel="noopener">위키백과에서 보기 · View on Wikipedia ↗</a>
     `;
+    appendWikiInfo(wikiName, layer);
   }
 
   function shiftLayer(groupLayer, dLat, dLng) {
