@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>세계지도 크기 비교 / True Size Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo", sans-serif; }
+  #map { position: absolute; inset: 0; cursor: grab; }
+  #map.dragging-country { cursor: grabbing; }
+  #panel {
+    position: absolute; top: 12px; left: 12px; z-index: 1000;
+    background: white; padding: 14px; border-radius: 10px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.18); width: 280px;
+    max-height: calc(100vh - 24px); overflow-y: auto;
+    box-sizing: border-box;
+  }
+  #panel-toggle {
+    position: absolute; top: 8px; right: 8px;
+    width: 28px; height: 28px;
+    border: 1px solid #ddd; background: white;
+    border-radius: 6px; cursor: pointer;
+    font-size: 16px; padding: 0; line-height: 1; color: #555;
+  }
+  #panel.collapsed { padding: 10px 14px; max-height: 42px; overflow: hidden; }
+  #panel.collapsed > *:not(h1):not(#panel-toggle) { display: none; }
+  h1 { font-size: 15px; margin: 0 0 10px; color: #222; padding-right: 32px; }
+  @media (max-width: 640px) {
+    #panel {
+      left: 8px; right: 8px; top: 8px;
+      width: auto; padding: 12px; max-height: 60vh;
+    }
+    #panel.collapsed { max-height: 40px; padding: 9px 12px; }
+    h1 { font-size: 14px; margin-bottom: 8px; }
+    #search { font-size: 16px; } /* avoid iOS zoom on focus */
+    #controls { grid-template-columns: repeat(3, 40px); grid-template-rows: repeat(3, 40px); }
+    #controls button { width: 40px; height: 40px; font-size: 18px; }
+  }
+  #search {
+    width: 100%; padding: 9px 10px; box-sizing: border-box;
+    border: 1px solid #d0d0d0; border-radius: 6px; font-size: 14px; outline: none;
+  }
+  #search:focus { border-color: #4a90e2; }
+  #results { max-height: 240px; overflow-y: auto; margin-top: 6px; }
+  .result {
+    padding: 8px 10px; cursor: pointer; border-radius: 5px;
+    font-size: 13px; color: #333; display: flex; justify-content: space-between;
+  }
+  .result:hover { background: #f1f5fa; }
+  .result .en { color: #888; font-size: 12px; }
+  #hint { font-size: 11px; color: #777; margin-top: 10px; line-height: 1.5; }
+  #clear {
+    margin-top: 8px; width: 100%; padding: 7px; cursor: pointer;
+    background: #f5f5f5; border: 1px solid #ddd; border-radius: 5px; font-size: 13px;
+  }
+  #clear:hover { background: #ebebeb; }
+  #active-info {
+    margin-top: 10px; padding: 8px 10px; border-radius: 6px;
+    background: #f7f9fc; border: 1px solid #e3e8ef;
+    font-size: 12px; color: #333; line-height: 1.4;
+  }
+  #active-info.empty { color: #999; }
+  #active-info b { font-size: 13px; }
+  #active-info .info-sub { font-size: 11px; color: #777; margin-top: 2px; }
+  #active-info .info-body { display: flex; gap: 10px; align-items: flex-start; margin-top: 8px; }
+  #active-info .flag { width: 46px; height: 32px; object-fit: cover; border: 1px solid #e0e0e0; border-radius: 3px; flex-shrink: 0; }
+  #active-info dl { margin: 0; font-size: 11px; flex: 1; }
+  #active-info dt { color: #888; }
+  #active-info dd { margin: 0 0 4px; font-weight: 600; color: #222; }
+  #active-info .wiki-link { display: inline-block; margin-top: 8px; font-size: 11px; color: #3366bb; text-decoration: none; }
+  #active-info .wiki-link:hover { text-decoration: underline; }
+  #active-info .info-loading { color: #999; font-size: 11px; margin-top: 6px; }
+  #controls {
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: repeat(3, 34px);
+    grid-template-rows: repeat(3, 34px);
+    gap: 4px; justify-content: start;
+  }
+  #controls button {
+    width: 34px; height: 34px;
+    border: 1px solid #ddd; background: white;
+    border-radius: 6px; cursor: pointer;
+    font-size: 16px; padding: 0; color: #444;
+  }
+  #controls button:hover:not(:disabled) { background: #eef3fa; border-color: #b8cbe6; }
+  #controls button:disabled { opacity: 0.35; cursor: default; }
+  .btn-up    { grid-column: 2; grid-row: 1; }
+  .btn-left  { grid-column: 1; grid-row: 2; }
+  .btn-down  { grid-column: 2; grid-row: 2; }
+  .btn-right { grid-column: 3; grid-row: 2; }
+  .btn-ccw   { grid-column: 1; grid-row: 3; }
+  .btn-cw    { grid-column: 3; grid-row: 3; }
+  .ctrl-hint { font-size: 10px; color: #999; margin-top: 4px; }
+  #sub-toggle {
+    margin-top: 10px; padding: 8px 10px; border-radius: 6px;
+    background: #fafafa; border: 1px solid #e3e3e3;
+    font-size: 12px; color: #333; display: flex; align-items: center; gap: 8px;
+    cursor: pointer; user-select: none;
+  }
+  #sub-toggle input { margin: 0; cursor: pointer; }
+  #sub-toggle .sub-label { flex: 1; line-height: 1.3; }
+  #sub-toggle .sub-label small { display: block; color: #888; font-size: 10px; }
+  #added { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 11px; padding: 3px 8px; border-radius: 10px; color: white;
+  }
+  .chip button { background: rgba(255,255,255,.3); border: 0; color: white; cursor: pointer; border-radius: 50%; width: 16px; height: 16px; font-size: 11px; line-height: 1; padding: 0; }
+  .country-label {
+    background: transparent; border: 0; box-shadow: none;
+    color: #2b2b2b; font-size: 11px; font-weight: 600;
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+    pointer-events: none; white-space: nowrap;
+  }
+  .country-label::before { display: none !important; }
+  .state-label {
+    background: transparent; border: 0; box-shadow: none;
+    color: #444; font-size: 10px; font-weight: 500;
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff;
+    pointer-events: none; white-space: nowrap;
+  }
+  .state-label::before { display: none !important; }
+</style>
+</head>
+<body>
+<div id="panel">
+  <button id="panel-toggle" title="접기/펼치기 · Collapse/Expand">−</button>
+  <h1>세계지도 크기 비교 · True Size Map</h1>
+  <input id="search" placeholder="나라 검색 / Search (예: 한국, Korea)" autocomplete="off">
+  <div id="results"></div>
+  <label id="sub-toggle">
+    <input type="checkbox" id="sub-toggle-cb">
+    <span class="sub-label">
+      주/도 보기 · Show subdivisions
+      <small>미국·캐나다·멕시코를 주/도 단위로 클릭</small>
+    </span>
+  </label>
+  <div id="active-info" class="empty">선택된 나라/주 없음 · Nothing selected</div>
+  <div id="controls" aria-label="선택된 나라 조종">
+    <button class="btn-up"    data-act="up"    title="위로 이동 (↑)">↑</button>
+    <button class="btn-left"  data-act="left"  title="왼쪽 이동 (←)">←</button>
+    <button class="btn-down"  data-act="down"  title="아래로 이동 (↓)">↓</button>
+    <button class="btn-right" data-act="right" title="오른쪽 이동 (→)">→</button>
+    <button class="btn-ccw"   data-act="ccw"   title="반시계 회전 (Q)">↺</button>
+    <button class="btn-cw"    data-act="cw"    title="시계 회전 (E)">↻</button>
+  </div>
+  <div class="ctrl-hint">Shift 누르면 5× 더 크게 / Hold Shift for 5× step</div>
+  <div id="added"></div>
+  <button id="clear">모두 지우기 / Clear all</button>
+  <div id="hint">
+    • 드래그 또는 <b>방향키</b>로 이동 (Shift = 5°씩)<br>
+    • 칩을 클릭하면 그 나라/주가 <b>활성화</b>되어 방향키로 조종 가능<br>
+    • 미국 주 이름(California, Texas 등)도 검색 가능<br>
+    • Drag or use <b>arrow keys</b> (Shift for bigger steps). US states are searchable too.
+  </div>
+</div>
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(() => {
+  const map = L.map('map', { worldCopyJump: true, minZoom: 2 }).setView([20, 10], 2);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+    attribution: '© OpenStreetMap, © CARTO',
+    subdomains: 'abcd',
+    maxZoom: 19
+  }).addTo(map);
+
+  // Korean name dictionary (commonly searched items)
+  const ko = {
+    "Afghanistan":"아프가니스탄","Albania":"알바니아","Algeria":"알제리","Angola":"앙골라",
+    "Argentina":"아르헨티나","Armenia":"아르메니아","Australia":"호주","Austria":"오스트리아",
+    "Azerbaijan":"아제르바이잔","Bahamas":"바하마","Bangladesh":"방글라데시","Belarus":"벨라루스",
+    "Belgium":"벨기에","Belize":"벨리즈","Benin":"베냉","Bhutan":"부탄","Bolivia":"볼리비아",
+    "Bosnia and Herzegovina":"보스니아 헤르체고비나","Botswana":"보츠와나","Brazil":"브라질",
+    "Brunei":"브루나이","Bulgaria":"불가리아","Burkina Faso":"부르키나파소","Burundi":"부룬디",
+    "Cambodia":"캄보디아","Cameroon":"카메룬","Canada":"캐나다","Central African Republic":"중앙아프리카공화국",
+    "Chad":"차드","Chile":"칠레","China":"중국","Colombia":"콜롬비아","Republic of the Congo":"콩고",
+    "Democratic Republic of the Congo":"콩고민주공화국","Costa Rica":"코스타리카","Ivory Coast":"코트디부아르",
+    "Croatia":"크로아티아","Cuba":"쿠바","Cyprus":"키프로스","Czech Republic":"체코","Denmark":"덴마크",
+    "Djibouti":"지부티","Dominican Republic":"도미니카공화국","Ecuador":"에콰도르","Egypt":"이집트",
+    "El Salvador":"엘살바도르","Equatorial Guinea":"적도기니","Eritrea":"에리트레아","Estonia":"에스토니아",
+    "Ethiopia":"에티오피아","Fiji":"피지","Finland":"핀란드","France":"프랑스","Gabon":"가봉",
+    "Gambia":"감비아","Georgia":"조지아","Germany":"독일","Ghana":"가나","Greece":"그리스",
+    "Greenland":"그린란드","Guatemala":"과테말라","Guinea":"기니","Guinea Bissau":"기니비사우",
+    "Guyana":"가이아나","Haiti":"아이티","Honduras":"온두라스","Hungary":"헝가리","Iceland":"아이슬란드",
+    "India":"인도","Indonesia":"인도네시아","Iran":"이란","Iraq":"이라크","Ireland":"아일랜드",
+    "Israel":"이스라엘","Italy":"이탈리아","Jamaica":"자메이카","Japan":"일본","Jordan":"요르단",
+    "Kazakhstan":"카자흐스탄","Kenya":"케냐","Kosovo":"코소보","Kuwait":"쿠웨이트","Kyrgyzstan":"키르기스스탄",
+    "Laos":"라오스","Latvia":"라트비아","Lebanon":"레바논","Lesotho":"레소토","Liberia":"라이베리아",
+    "Libya":"리비아","Lithuania":"리투아니아","Luxembourg":"룩셈부르크","Macedonia":"북마케도니아",
+    "Madagascar":"마다가스카르","Malawi":"말라위","Malaysia":"말레이시아","Mali":"말리",
+    "Mauritania":"모리타니","Mexico":"멕시코","Moldova":"몰도바","Mongolia":"몽골","Montenegro":"몬테네그로",
+    "Morocco":"모로코","Mozambique":"모잠비크","Myanmar":"미얀마","Namibia":"나미비아","Nepal":"네팔",
+    "Netherlands":"네덜란드","New Caledonia":"뉴칼레도니아","New Zealand":"뉴질랜드","Nicaragua":"니카라과",
+    "Niger":"니제르","Nigeria":"나이지리아","North Korea":"북한","Northern Cyprus":"북키프로스",
+    "Norway":"노르웨이","Oman":"오만","Pakistan":"파키스탄","Palestine":"팔레스타인","Panama":"파나마",
+    "Papua New Guinea":"파푸아뉴기니","Paraguay":"파라과이","Peru":"페루","Philippines":"필리핀",
+    "Poland":"폴란드","Portugal":"포르투갈","Puerto Rico":"푸에르토리코","Qatar":"카타르","Romania":"루마니아",
+    "Russia":"러시아","Rwanda":"르완다","Saudi Arabia":"사우디아라비아","Senegal":"세네갈","Serbia":"세르비아",
+    "Sierra Leone":"시에라리온","Slovakia":"슬로바키아","Slovenia":"슬로베니아","Solomon Islands":"솔로몬 제도",
+    "Somalia":"소말리아","South Africa":"남아프리카공화국","South Korea":"대한민국","South Sudan":"남수단",
+    "Spain":"스페인","Sri Lanka":"스리랑카","Sudan":"수단","Suriname":"수리남","Swaziland":"에스와티니",
+    "Sweden":"스웨덴","Switzerland":"스위스","Syria":"시리아","Taiwan":"대만","Tajikistan":"타지키스탄",
+    "Tanzania":"탄자니아","Thailand":"태국","Timor-Leste":"동티모르","Togo":"토고","Trinidad and Tobago":"트리니다드 토바고",
+    "Tunisia":"튀니지","Turkey":"튀르키예","Turkmenistan":"투르크메니스탄","Uganda":"우간다","Ukraine":"우크라이나",
+    "United Arab Emirates":"아랍에미리트","United Kingdom":"영국","United States of America":"미국",
+    "Uruguay":"우루과이","Uzbekistan":"우즈베키스탄","Vanuatu":"바누아투","Venezuela":"베네수엘라",
+    "Vietnam":"베트남","Western Sahara":"서사하라","Yemen":"예멘","Zambia":"잠비아","Zimbabwe":"짐바브웨"
+  };
+
+  const koStates = {
+    "Alabama":"앨라배마","Alaska":"알래스카","Arizona":"애리조나","Arkansas":"아칸소",
+    "California":"캘리포니아","Colorado":"콜로라도","Connecticut":"코네티컷","Delaware":"델라웨어",
+    "Florida":"플로리다","Georgia":"조지아주","Hawaii":"하와이","Idaho":"아이다호",
+    "Illinois":"일리노이","Indiana":"인디애나","Iowa":"아이오와","Kansas":"캔자스",
+    "Kentucky":"켄터키","Louisiana":"루이지애나","Maine":"메인","Maryland":"메릴랜드",
+    "Massachusetts":"매사추세츠","Michigan":"미시간","Minnesota":"미네소타","Mississippi":"미시시피",
+    "Missouri":"미주리","Montana":"몬태나","Nebraska":"네브래스카","Nevada":"네바다",
+    "New Hampshire":"뉴햄프셔","New Jersey":"뉴저지","New Mexico":"뉴멕시코","New York":"뉴욕주",
+    "North Carolina":"노스캐롤라이나","North Dakota":"노스다코타","Ohio":"오하이오","Oklahoma":"오클라호마",
+    "Oregon":"오리건","Pennsylvania":"펜실베이니아","Rhode Island":"로드아일랜드","South Carolina":"사우스캐롤라이나",
+    "South Dakota":"사우스다코타","Tennessee":"테네시","Texas":"텍사스","Utah":"유타",
+    "Vermont":"버몬트","Virginia":"버지니아","Washington":"워싱턴주","West Virginia":"웨스트버지니아",
+    "Wisconsin":"위스콘신","Wyoming":"와이오밍","District of Columbia":"워싱턴 D.C.","Puerto Rico":"푸에르토리코"
+  };
+
+  const koProvincesCA = {
+    "Alberta":"앨버타","British Columbia":"브리티시컬럼비아","Manitoba":"매니토바",
+    "New Brunswick":"뉴브런즈윅","Newfoundland and Labrador":"뉴펀들랜드 래브라도",
+    "Nova Scotia":"노바스코샤","Ontario":"온타리오","Prince Edward Island":"프린스에드워드아일랜드",
+    "Quebec":"퀘벡","Québec":"퀘벡","Saskatchewan":"서스캐처원",
+    "Northwest Territories":"노스웨스트 준주","Nunavut":"누나부트","Yukon":"유콘"
+  };
+
+  const koStatesMX = {
+    "Aguascalientes":"아과스칼리엔테스","Baja California":"바하칼리포르니아","Baja California Sur":"바하칼리포르니아수르",
+    "Campeche":"캄페체","Chiapas":"치아파스","Chihuahua":"치와와","Coahuila":"코아우일라","Coahuila de Zaragoza":"코아우일라",
+    "Colima":"콜리마","Durango":"두랑고","Guanajuato":"과나후아토","Guerrero":"게레로","Hidalgo":"이달고",
+    "Jalisco":"할리스코","México":"멕시코주","Mexico":"멕시코주","State of Mexico":"멕시코주",
+    "Michoacán":"미초아칸","Michoacán de Ocampo":"미초아칸","Morelos":"모렐로스","Nayarit":"나야리트",
+    "Nuevo León":"누에보레온","Oaxaca":"오악사카","Puebla":"푸에블라","Querétaro":"케레타로",
+    "Querétaro de Arteaga":"케레타로","Quintana Roo":"킨타나로오","San Luis Potosí":"산루이스포토시",
+    "Sinaloa":"시날로아","Sonora":"소노라","Tabasco":"타바스코","Tamaulipas":"타마울리파스",
+    "Tlaxcala":"틀락스칼라","Veracruz":"베라크루스","Veracruz de Ignacio de la Llave":"베라크루스",
+    "Yucatán":"유카탄","Zacatecas":"사카테카스",
+    "Distrito Federal":"멕시코시티","Ciudad de México":"멕시코시티","Mexico City":"멕시코시티"
+  };
+
+  const koUK = {
+    "England":"잉글랜드","Scotland":"스코틀랜드","Wales":"웨일스",
+    "Northern Ireland":"북아일랜드"
+  };
+
+  // China: Chinese (native) → English translation map
+  const cnToEn = {
+    "北京市":"Beijing","天津市":"Tianjin","上海市":"Shanghai","重庆市":"Chongqing",
+    "河北省":"Hebei","山西省":"Shanxi","辽宁省":"Liaoning","吉林省":"Jilin",
+    "黑龙江省":"Heilongjiang","江苏省":"Jiangsu","浙江省":"Zhejiang","安徽省":"Anhui",
+    "福建省":"Fujian","江西省":"Jiangxi","山东省":"Shandong","河南省":"Henan",
+    "湖北省":"Hubei","湖南省":"Hunan","广东省":"Guangdong","海南省":"Hainan",
+    "四川省":"Sichuan","贵州省":"Guizhou","云南省":"Yunnan","陕西省":"Shaanxi",
+    "甘肃省":"Gansu","青海省":"Qinghai","台湾省":"Taiwan",
+    "内蒙古自治区":"Inner Mongolia","广西壮族自治区":"Guangxi","西藏自治区":"Tibet",
+    "宁夏回族自治区":"Ningxia","新疆维吾尔自治区":"Xinjiang",
+    "香港特别行政区":"Hong Kong","澳门特别行政区":"Macau"
+  };
+  const koProvincesCN = {
+    "Beijing":"베이징","Tianjin":"톈진","Shanghai":"상하이","Chongqing":"충칭",
+    "Hebei":"허베이","Shanxi":"산시(산시성)","Liaoning":"랴오닝","Jilin":"지린",
+    "Heilongjiang":"헤이룽장","Jiangsu":"장쑤","Zhejiang":"저장","Anhui":"안후이",
+    "Fujian":"푸젠","Jiangxi":"장시","Shandong":"산둥","Henan":"허난",
+    "Hubei":"후베이","Hunan":"후난","Guangdong":"광둥","Hainan":"하이난",
+    "Sichuan":"쓰촨","Guizhou":"구이저우","Yunnan":"윈난","Shaanxi":"산시(샨시성)",
+    "Gansu":"간쑤","Qinghai":"칭하이","Taiwan":"대만",
+    "Inner Mongolia":"내몽골","Guangxi":"광시","Tibet":"티베트",
+    "Ningxia":"닝샤","Xinjiang":"신장","Hong Kong":"홍콩","Macau":"마카오"
+  };
+
+  const koProvincesKR = {
+    "Seoul":"서울","Busan":"부산","Daegu":"대구","Incheon":"인천","Gwangju":"광주",
+    "Daejeon":"대전","Ulsan":"울산","Sejong":"세종",
+    "Gyeonggi":"경기도","Gyeonggi-do":"경기도","Gyeonggi Province":"경기도",
+    "Gangwon":"강원도","Gangwon-do":"강원도","Gangwon Province":"강원도",
+    "North Chungcheong":"충청북도","Chungcheongbuk-do":"충청북도","Chungcheongbuk Province":"충청북도","Chungcheongbuk-do Province":"충청북도",
+    "South Chungcheong":"충청남도","Chungcheongnam-do":"충청남도","Chungcheongnam Province":"충청남도","Chungcheongnam-do Province":"충청남도",
+    "North Jeolla":"전라북도","Jeollabuk-do":"전라북도","Jeollabuk Province":"전라북도","Jeollabuk-do Province":"전라북도",
+    "South Jeolla":"전라남도","Jeollanam-do":"전라남도","Jeollanam Province":"전라남도","Jeollanam-do Province":"전라남도",
+    "North Gyeongsang":"경상북도","Gyeongsangbuk-do":"경상북도","Gyeongsangbuk Province":"경상북도","Gyeongsangbuk-do Province":"경상북도",
+    "South Gyeongsang":"경상남도","Gyeongsangnam-do":"경상남도","Gyeongsangnam Province":"경상남도","Gyeongsangnam-do Province":"경상남도",
+    "Jeju":"제주도","Jeju-do":"제주도","Jeju Special Self-Governing Province":"제주도","Jeju Province":"제주도"
+  };
+
+  const koPrefJP = {
+    "Hokkaido":"홋카이도","Aomori":"아오모리","Iwate":"이와테","Miyagi":"미야기","Akita":"아키타",
+    "Yamagata":"야마가타","Fukushima":"후쿠시마","Ibaraki":"이바라키","Tochigi":"도치기",
+    "Gunma":"군마","Saitama":"사이타마","Chiba":"지바","Tokyo":"도쿄","Kanagawa":"가나가와",
+    "Niigata":"니가타","Toyama":"도야마","Ishikawa":"이시카와","Fukui":"후쿠이","Yamanashi":"야마나시",
+    "Nagano":"나가노","Gifu":"기후","Shizuoka":"시즈오카","Aichi":"아이치","Mie":"미에",
+    "Shiga":"시가","Kyoto":"교토","Osaka":"오사카","Hyogo":"효고","Nara":"나라",
+    "Wakayama":"와카야마","Tottori":"돗토리","Shimane":"시마네","Okayama":"오카야마",
+    "Hiroshima":"히로시마","Yamaguchi":"야마구치","Tokushima":"도쿠시마","Kagawa":"카가와",
+    "Ehime":"에히메","Kochi":"고치","Fukuoka":"후쿠오카","Saga":"사가","Nagasaki":"나가사키",
+    "Kumamoto":"구마모토","Oita":"오이타","Miyazaki":"미야자키","Kagoshima":"가고시마","Okinawa":"오키나와"
+  };
+
+  const koStatesAU = {
+    "New South Wales":"뉴사우스웨일스","Victoria":"빅토리아","Queensland":"퀸즐랜드",
+    "South Australia":"사우스오스트레일리아","Western Australia":"웨스턴오스트레일리아",
+    "Tasmania":"태즈메이니아","Northern Territory":"노던 준주","Australian Capital Territory":"오스트레일리아 수도 준주"
+  };
+
+  const koProvincesAR = {
+    "Buenos Aires":"부에노스아이레스주","Catamarca":"카타마르카","Chaco":"차코","Chubut":"추부트",
+    "Córdoba":"코르도바","Corrientes":"코리엔테스","Entre Ríos":"엔트레리오스","Formosa":"포르모사",
+    "Jujuy":"후후이","La Pampa":"라팜파","La Rioja":"라리오하","Mendoza":"멘도사","Misiones":"미시오네스",
+    "Neuquén":"네우켄","Río Negro":"리오네그로","Salta":"살타","San Juan":"산후안","San Luis":"산루이스",
+    "Santa Cruz":"산타크루스","Santa Fe":"산타페","Santiago del Estero":"산티아고델에스테로",
+    "Tierra del Fuego":"티에라델푸에고","Tucumán":"투쿠만",
+    "Ciudad Autónoma de Buenos Aires":"부에노스아이레스시"
+  };
+
+  const koStatesBR = {
+    "Acre":"아크리","Alagoas":"알라고아스","Amapá":"아마파","Amazonas":"아마조나스","Bahia":"바이아",
+    "Ceará":"세아라","Distrito Federal":"연방구","Espírito Santo":"이스피리투산투","Goiás":"고이아스",
+    "Maranhão":"마라냥","Mato Grosso":"마투그로수","Mato Grosso do Sul":"마투그로수두술",
+    "Minas Gerais":"미나스제라이스","Pará":"파라","Paraíba":"파라이바","Paraná":"파라나",
+    "Pernambuco":"페르남부쿠","Piauí":"피아우이","Rio de Janeiro":"리우데자네이루",
+    "Rio Grande do Norte":"히우그란지두노르치","Rio Grande do Sul":"히우그란지두술",
+    "Rondônia":"혼도니아","Roraima":"호라이마","Santa Catarina":"산타카타리나",
+    "São Paulo":"상파울루","Sergipe":"세르지피","Tocantins":"토칸칭스"
+  };
+
+  // Subdivision info database — keyed "{country}:{name}" → {area km², pop}
+  const subInfo = {
+    // UK countries
+    'GB:England': { area: 130279, pop: 56540000 },
+    'GB:Scotland': { area: 77933, pop: 5480000 },
+    'GB:Wales': { area: 20779, pop: 3107000 },
+    'GB:Northern Ireland': { area: 14130, pop: 1900000 },
+    // South Korea (metropolitan cities + provinces)
+    'KR:Seoul': { area: 605, pop: 9668000 },
+    'KR:Busan': { area: 770, pop: 3349000 },
+    'KR:Daegu': { area: 883, pop: 2410000 },
+    'KR:Incheon': { area: 1064, pop: 2957000 },
+    'KR:Gwangju': { area: 501, pop: 1441000 },
+    'KR:Daejeon': { area: 540, pop: 1452000 },
+    'KR:Ulsan': { area: 1060, pop: 1136000 },
+    'KR:Sejong': { area: 465, pop: 371000 },
+    'KR:Gyeonggi': { area: 10171, pop: 13550000 },
+    'KR:Gangwon': { area: 16830, pop: 1539000 },
+    'KR:North Chungcheong': { area: 7407, pop: 1597000 },
+    'KR:South Chungcheong': { area: 8226, pop: 2123000 },
+    'KR:North Jeolla': { area: 8070, pop: 1792000 },
+    'KR:South Jeolla': { area: 12348, pop: 1833000 },
+    'KR:North Gyeongsang': { area: 19033, pop: 2626000 },
+    'KR:South Gyeongsang': { area: 10540, pop: 3314000 },
+    'KR:Jeju': { area: 1850, pop: 670000 },
+    // Japan — all 47 prefectures
+    'JP:Hokkaido': { area: 83424, pop: 5250000 },
+    'JP:Aomori': { area: 9646, pop: 1238000 },
+    'JP:Iwate': { area: 15275, pop: 1211000 },
+    'JP:Miyagi': { area: 7282, pop: 2302000 },
+    'JP:Akita': { area: 11638, pop: 956000 },
+    'JP:Yamagata': { area: 9323, pop: 1068000 },
+    'JP:Fukushima': { area: 13784, pop: 1833000 },
+    'JP:Ibaraki': { area: 6097, pop: 2867000 },
+    'JP:Tochigi': { area: 6408, pop: 1933000 },
+    'JP:Gunma': { area: 6362, pop: 1939000 },
+    'JP:Saitama': { area: 3798, pop: 7345000 },
+    'JP:Chiba': { area: 5158, pop: 6284000 },
+    'JP:Tokyo': { area: 2194, pop: 13960000 },
+    'JP:Kanagawa': { area: 2416, pop: 9240000 },
+    'JP:Niigata': { area: 12584, pop: 2201000 },
+    'JP:Toyama': { area: 4248, pop: 1035000 },
+    'JP:Ishikawa': { area: 4186, pop: 1133000 },
+    'JP:Fukui': { area: 4191, pop: 767000 },
+    'JP:Yamanashi': { area: 4465, pop: 810000 },
+    'JP:Nagano': { area: 13562, pop: 2048000 },
+    'JP:Gifu': { area: 10621, pop: 1979000 },
+    'JP:Shizuoka': { area: 7777, pop: 3635000 },
+    'JP:Aichi': { area: 5173, pop: 7552000 },
+    'JP:Mie': { area: 5774, pop: 1781000 },
+    'JP:Shiga': { area: 4017, pop: 1413000 },
+    'JP:Kyoto': { area: 4612, pop: 2578000 },
+    'JP:Osaka': { area: 1905, pop: 8838000 },
+    'JP:Hyogo': { area: 8400, pop: 5469000 },
+    'JP:Nara': { area: 3691, pop: 1324000 },
+    'JP:Wakayama': { area: 4725, pop: 923000 },
+    'JP:Tottori': { area: 3507, pop: 555000 },
+    'JP:Shimane': { area: 6708, pop: 671000 },
+    'JP:Okayama': { area: 7114, pop: 1888000 },
+    'JP:Hiroshima': { area: 8480, pop: 2800000 },
+    'JP:Yamaguchi': { area: 6113, pop: 1342000 },
+    'JP:Tokushima': { area: 4146, pop: 720000 },
+    'JP:Kagawa': { area: 1877, pop: 950000 },
+    'JP:Ehime': { area: 5676, pop: 1335000 },
+    'JP:Kochi': { area: 7104, pop: 692000 },
+    'JP:Fukuoka': { area: 4987, pop: 5135000 },
+    'JP:Saga': { area: 2441, pop: 811000 },
+    'JP:Nagasaki': { area: 4131, pop: 1312000 },
+    'JP:Kumamoto': { area: 7409, pop: 1738000 },
+    'JP:Oita': { area: 6341, pop: 1124000 },
+    'JP:Miyazaki': { area: 7735, pop: 1070000 },
+    'JP:Kagoshima': { area: 9187, pop: 1588000 },
+    'JP:Okinawa': { area: 2281, pop: 1468000 },
+    // China — 34 provincial-level divisions
+    'CN:Xinjiang': { area: 1664897, pop: 25850000 },
+    'CN:Tibet': { area: 1228400, pop: 3650000 },
+    'CN:Inner Mongolia': { area: 1183000, pop: 24040000 },
+    'CN:Qinghai': { area: 720000, pop: 5920000 },
+    'CN:Sichuan': { area: 486000, pop: 83670000 },
+    'CN:Heilongjiang': { area: 453000, pop: 31850000 },
+    'CN:Gansu': { area: 454000, pop: 25020000 },
+    'CN:Yunnan': { area: 394000, pop: 47210000 },
+    'CN:Guangxi': { area: 237600, pop: 50120000 },
+    'CN:Hunan': { area: 211800, pop: 66440000 },
+    'CN:Shaanxi': { area: 205800, pop: 39530000 },
+    'CN:Hebei': { area: 190000, pop: 74610000 },
+    'CN:Jilin': { area: 187400, pop: 24074000 },
+    'CN:Hubei': { area: 185900, pop: 57750000 },
+    'CN:Guangdong': { area: 179800, pop: 126010000 },
+    'CN:Guizhou': { area: 176167, pop: 38560000 },
+    'CN:Jiangxi': { area: 166900, pop: 45188000 },
+    'CN:Henan': { area: 167000, pop: 99370000 },
+    'CN:Shandong': { area: 157100, pop: 101520000 },
+    'CN:Shanxi': { area: 156700, pop: 34910000 },
+    'CN:Liaoning': { area: 145900, pop: 42590000 },
+    'CN:Anhui': { area: 139400, pop: 61030000 },
+    'CN:Fujian': { area: 121400, pop: 41540000 },
+    'CN:Jiangsu': { area: 102600, pop: 84750000 },
+    'CN:Zhejiang': { area: 101800, pop: 64570000 },
+    'CN:Chongqing': { area: 82400, pop: 32050000 },
+    'CN:Ningxia': { area: 66400, pop: 7200000 },
+    'CN:Hainan': { area: 35400, pop: 10080000 },
+    'CN:Taiwan': { area: 36193, pop: 23580000 },
+    'CN:Beijing': { area: 16410, pop: 21890000 },
+    'CN:Tianjin': { area: 11946, pop: 13866000 },
+    'CN:Shanghai': { area: 6340, pop: 24870000 },
+    'CN:Hong Kong': { area: 1106, pop: 7482000 },
+    'CN:Macau': { area: 32, pop: 683000 },
+    // Australia states
+    'AU:New South Wales': { area: 800642, pop: 8166000 },
+    'AU:Victoria': { area: 227416, pop: 6681000 },
+    'AU:Queensland': { area: 1730648, pop: 5185000 },
+    'AU:South Australia': { area: 983482, pop: 1771000 },
+    'AU:Western Australia': { area: 2527013, pop: 2660000 },
+    'AU:Tasmania': { area: 68401, pop: 541000 },
+    'AU:Northern Territory': { area: 1419630, pop: 250000 },
+    'AU:Australian Capital Territory': { area: 2358, pop: 431000 },
+    // Canada provinces/territories
+    'CA:Ontario': { area: 1076395, pop: 14745000 },
+    'CA:Quebec': { area: 1542056, pop: 8575000 },
+    'CA:British Columbia': { area: 944735, pop: 5071000 },
+    'CA:Alberta': { area: 661848, pop: 4371000 },
+    'CA:Manitoba': { area: 647797, pop: 1377000 },
+    'CA:Saskatchewan': { area: 651036, pop: 1178000 },
+    'CA:Nova Scotia': { area: 55284, pop: 979000 },
+    'CA:New Brunswick': { area: 72908, pop: 776000 },
+    'CA:Newfoundland and Labrador': { area: 405212, pop: 520000 },
+    'CA:Prince Edward Island': { area: 5660, pop: 159000 },
+    'CA:Yukon': { area: 482443, pop: 42000 },
+    'CA:Northwest Territories': { area: 1346106, pop: 45000 },
+    'CA:Nunavut': { area: 2093190, pop: 39000 },
+    // US top states
+    'US:Alaska': { area: 1723337, pop: 733000 },
+    'US:Texas': { area: 695662, pop: 29100000 },
+    'US:California': { area: 423967, pop: 39500000 },
+    'US:Montana': { area: 380831, pop: 1084000 },
+    'US:New Mexico': { area: 314917, pop: 2117000 },
+    'US:Arizona': { area: 295234, pop: 7278000 },
+    'US:Nevada': { area: 286380, pop: 3104000 },
+    'US:Colorado': { area: 269601, pop: 5812000 },
+    'US:Oregon': { area: 254799, pop: 4240000 },
+    'US:Wyoming': { area: 253335, pop: 578000 },
+    'US:Michigan': { area: 250487, pop: 10077000 },
+    'US:Minnesota': { area: 225163, pop: 5707000 },
+    'US:Utah': { area: 219882, pop: 3271000 },
+    'US:Idaho': { area: 216443, pop: 1839000 },
+    'US:Kansas': { area: 213100, pop: 2937000 },
+    'US:Nebraska': { area: 200330, pop: 1961000 },
+    'US:South Dakota': { area: 199729, pop: 886000 },
+    'US:Washington': { area: 184661, pop: 7705000 },
+    'US:North Dakota': { area: 183108, pop: 779000 },
+    'US:Oklahoma': { area: 181037, pop: 3959000 },
+    'US:Missouri': { area: 180540, pop: 6154000 },
+    'US:Florida': { area: 170312, pop: 21538000 },
+    'US:Wisconsin': { area: 169635, pop: 5893000 },
+    'US:Georgia': { area: 153910, pop: 10711000 },
+    'US:Illinois': { area: 149995, pop: 12812000 },
+    'US:Iowa': { area: 145746, pop: 3190000 },
+    'US:New York': { area: 141297, pop: 20201000 },
+    'US:North Carolina': { area: 139391, pop: 10439000 },
+    'US:Arkansas': { area: 137732, pop: 3011000 },
+    'US:Alabama': { area: 135767, pop: 5024000 },
+    'US:Louisiana': { area: 135659, pop: 4657000 },
+    'US:Mississippi': { area: 125438, pop: 2961000 },
+    'US:Pennsylvania': { area: 119280, pop: 13002000 },
+    'US:Ohio': { area: 116098, pop: 11799000 },
+    'US:Virginia': { area: 110787, pop: 8631000 },
+    'US:Tennessee': { area: 109153, pop: 6910000 },
+    'US:Kentucky': { area: 104656, pop: 4505000 },
+    'US:Indiana': { area: 94326, pop: 6785000 },
+    'US:Maine': { area: 91633, pop: 1362000 },
+    'US:South Carolina': { area: 82933, pop: 5118000 },
+    'US:West Virginia': { area: 62755, pop: 1793000 },
+    'US:Maryland': { area: 32131, pop: 6177000 },
+    'US:Hawaii': { area: 28313, pop: 1455000 },
+    'US:Massachusetts': { area: 27336, pop: 7029000 },
+    'US:Vermont': { area: 24906, pop: 643000 },
+    'US:New Hampshire': { area: 24214, pop: 1377000 },
+    'US:New Jersey': { area: 22591, pop: 9289000 },
+    'US:Connecticut': { area: 14357, pop: 3606000 },
+    'US:Delaware': { area: 6446, pop: 990000 },
+    'US:Rhode Island': { area: 4001, pop: 1098000 },
+    'US:District of Columbia': { area: 177, pop: 689000 },
+    // Brazil (top 10 by area + southeast notable)
+    'BR:Amazonas': { area: 1559159, pop: 4269000 },
+    'BR:Pará': { area: 1247955, pop: 8778000 },
+    'BR:Mato Grosso': { area: 903378, pop: 3567000 },
+    'BR:Minas Gerais': { area: 586528, pop: 21411000 },
+    'BR:Bahia': { area: 564733, pop: 14985000 },
+    'BR:Mato Grosso do Sul': { area: 357145, pop: 2839000 },
+    'BR:Goiás': { area: 340086, pop: 7206000 },
+    'BR:Maranhão': { area: 331937, pop: 7153000 },
+    'BR:Rio Grande do Sul': { area: 281730, pop: 11466000 },
+    'BR:Tocantins': { area: 277720, pop: 1607000 },
+    'BR:São Paulo': { area: 248222, pop: 46289000 },
+    'BR:Rio de Janeiro': { area: 43696, pop: 17463000 },
+    // Argentina (top by area)
+    'AR:Buenos Aires': { area: 307571, pop: 17569000 },
+    'AR:Santa Cruz': { area: 243943, pop: 366000 },
+    'AR:Chubut': { area: 224686, pop: 618000 },
+    'AR:Córdoba': { area: 165321, pop: 3798000 },
+    'AR:Río Negro': { area: 203013, pop: 747000 },
+    'AR:Salta': { area: 155488, pop: 1441000 },
+    'AR:La Pampa': { area: 143440, pop: 358000 },
+    'AR:Neuquén': { area: 94078, pop: 664000 },
+    'AR:Mendoza': { area: 148827, pop: 2014000 },
+    // Mexico top
+    'MX:Chihuahua': { area: 247087, pop: 3741000 },
+    'MX:Sonora': { area: 179355, pop: 2944000 },
+    'MX:Coahuila': { area: 151563, pop: 3146000 },
+    'MX:Durango': { area: 123364, pop: 1832000 },
+    'MX:Oaxaca': { area: 93793, pop: 4132000 },
+    'MX:Jalisco': { area: 78588, pop: 8348000 },
+    'MX:Veracruz': { area: 71826, pop: 8062000 },
+    'MX:México': { area: 22357, pop: 16992000 },
+    'MX:Mexico City': { area: 1485, pop: 9209000 }
+  };
+
+  // Flag URL helper (Wikimedia Commons Special:FilePath)
+  function subFlagUrl(name) {
+    return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent('Flag of ' + name)}.svg?width=80`;
+  }
+
+  // Rankings
+  const countryAreaRank = {}; // iso3 → rank
+  let countryTotal = 0;
+  const subRanks = {};        // "{country}:{name}" → rank within country (by area)
+  const subCountryTotals = {}; // country → total ranked items
+
+  function computeSubRanks() {
+    const byCountry = {};
+    Object.entries(subInfo).forEach(([key, info]) => {
+      const [c, n] = key.split(':');
+      if (!byCountry[c]) byCountry[c] = [];
+      byCountry[c].push({ key, area: info.area });
+    });
+    Object.entries(byCountry).forEach(([c, arr]) => {
+      arr.sort((a, b) => b.area - a.area);
+      subCountryTotals[c] = arr.length;
+      arr.forEach((item, i) => { subRanks[item.key] = i + 1; });
+    });
+  }
+  computeSubRanks();
+
+  async function loadCountryRankings() {
+    try {
+      const res = await fetch('https://restcountries.com/v3.1/all?fields=cca3,area');
+      const all = await res.json();
+      const sorted = all.filter(c => c.area > 0).sort((a, b) => b.area - a.area);
+      countryTotal = sorted.length;
+      sorted.forEach((c, i) => { countryAreaRank[c.cca3] = i + 1; });
+    } catch (e) { console.error('country rankings failed', e); }
+  }
+  loadCountryRankings();
+
+  let items = []; // countries + subdivisions (searchable + draggable)
+  const layers = [];
+  const countryLabels = [];
+  const subLabels = [];   // subdivision labels (US/CA/MX)
+  const subBaseLayers = []; // clickable base subdivision polygons (toggle)
+  let subsVisible = false;
+  let activeLayer = null;
+  const addedEl = document.getElementById('added');
+  const searchEl = document.getElementById('search');
+  const resultsEl = document.getElementById('results');
+
+  // Walk coords, yielding [lng, lat] pairs
+  function eachCoord(geom, fn) {
+    const walk = (arr) => {
+      if (typeof arr[0] === 'number') { fn(arr); return; }
+      arr.forEach(walk);
+    };
+    walk(geom.coordinates);
+  }
+  function featureBBox(f) {
+    let minX = 180, minY = 90, maxX = -180, maxY = -90;
+    eachCoord(f.geometry, ([x, y]) => {
+      if (x < minX) minX = x; if (y < minY) minY = y;
+      if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+    });
+    return [minX, minY, maxX, maxY];
+  }
+  function featureArea(f) {
+    const [a, b, c, d] = featureBBox(f);
+    return (c - a) * (d - b);
+  }
+  // For labels, use the largest polygon's bbox center so it sits over the main landmass
+  function featureCenter(f) {
+    const polys = [];
+    const collect = (arr, depth) => {
+      if (depth === 0) { polys.push(arr); return; }
+      arr.forEach(sub => collect(sub, depth - 1));
+    };
+    if (f.geometry.type === 'Polygon') polys.push(f.geometry.coordinates);
+    else if (f.geometry.type === 'MultiPolygon') f.geometry.coordinates.forEach(p => polys.push(p));
+    else return null;
+    let best = null, bestArea = -1;
+    polys.forEach(poly => {
+      const ring = poly[0];
+      let minX = 180, minY = 90, maxX = -180, maxY = -90;
+      ring.forEach(([x, y]) => {
+        if (x < minX) minX = x; if (y < minY) minY = y;
+        if (x > maxX) maxX = x; if (y > maxY) maxY = y;
+      });
+      const a = (maxX - minX) * (maxY - minY);
+      if (a > bestArea) { bestArea = a; best = [(minX + maxX) / 2, (minY + maxY) / 2]; }
+    });
+    return best ? L.latLng(best[1], best[0]) : null;
+  }
+  function labelMinZoom(area) {
+    if (area > 400) return 2;
+    if (area > 80) return 3;
+    if (area > 20) return 4;
+    if (area > 5) return 5;
+    return 6;
+  }
+  function updateLabelVisibility() {
+    const z = map.getZoom();
+    countryLabels.forEach(m => {
+      const should = z >= m._minZoom;
+      const on = map.hasLayer(m);
+      if (should && !on) m.addTo(map);
+      else if (!should && on) map.removeLayer(m);
+    });
+    subLabels.forEach(m => {
+      const should = subsVisible && z >= 4;
+      const on = map.hasLayer(m);
+      if (should && !on) m.addTo(map);
+      else if (!should && on) map.removeLayer(m);
+    });
+  }
+  map.on('zoomend', updateLabelVisibility);
+
+  // Unified loader for subdivisions
+  //   opts: { nameProp, filter, nameMap (translate native → English) }
+  function loadSubdivisions(url, code, koDict, opts = {}) {
+    return fetch(url).then(r => r.json()).then(data => {
+      let features = data.features;
+      if (opts.filter) features = features.filter(opts.filter);
+      features.forEach(f => {
+        const p = f.properties || {};
+        let name = opts.nameProp ? p[opts.nameProp]
+          : (p.name_english || p.name_eng || p.NAME_1 || p.STATE_NAME || p.SUBUNIT || p.name || p.NAME);
+        if (!name) return;
+        if (opts.nameMap) name = opts.nameMap[name] || name;
+        const koName = koDict[name] || name;
+
+        const c = featureCenter(f);
+        if (c) {
+          const marker = L.marker(c, {
+            icon: L.divIcon({ className: 'state-label', html: name }),
+            interactive: false, keyboard: false
+          });
+          subLabels.push(marker);
+        }
+
+        const layer = L.geoJSON(f, {
+          style: { color: '#9a9a9a', weight: 0.7, opacity: 0.75, fillColor: '#000', fillOpacity: 0 }
+        });
+        layer.eachLayer(sub => {
+          sub.bindTooltip(`${koName} (${code}) · ${name}`, { sticky: true });
+          sub.on('mouseover', () => sub.setStyle({ fillOpacity: 0.1 }));
+          sub.on('mouseout',  () => sub.setStyle({ fillOpacity: 0 }));
+          sub.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            addCountry({ name, koName, geometry: f.geometry, isState: true, country: code });
+          });
+        });
+        subBaseLayers.push(layer);
+
+        items.push({
+          name, koName,
+          geometry: f.geometry,
+          isState: true, country: code
+        });
+      });
+      items.sort((a, b) => a.name.localeCompare(b.name));
+      if (subsVisible) applySubsVisibility();
+    }).catch(e => console.error(`Subdivisions load failed (${code})`, e));
+  }
+
+  function applySubsVisibility() {
+    subBaseLayers.forEach(l => {
+      if (subsVisible) l.addTo(map);
+      else map.removeLayer(l);
+    });
+    updateLabelVisibility();
+  }
+
+  loadSubdivisions('https://raw.githubusercontent.com/PublicaMundi/MappingAPI/master/data/geojson/us-states.json', 'US', koStates);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/canada.geojson', 'CA', koProvincesCA);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/mexico.geojson', 'MX', koStatesMX);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/brazil-states.geojson', 'BR', koStatesBR);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/japan.geojson', 'JP', koPrefJP, { nameProp: 'name_english' });
+  loadSubdivisions('https://raw.githubusercontent.com/rowanhogan/australian-states/master/states.min.geojson', 'AU', koStatesAU, { nameProp: 'STATE_NAME' });
+  loadSubdivisions('https://raw.githubusercontent.com/southkorea/southkorea-maps/master/kostat/2018/json/skorea-provinces-2018-geo.json', 'KR', koProvincesKR, { nameProp: 'name_eng' });
+  loadSubdivisions('https://raw.githubusercontent.com/longwosion/geojson-map-china/master/china.json', 'CN', koProvincesCN, { nameProp: 'name', nameMap: cnToEn });
+  // UK: Natural Earth map_subunits has 4 UK countries (England, Scotland, Wales, Northern Ireland)
+  loadSubdivisions(
+    'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson',
+    'GB', koUK,
+    { nameProp: 'SUBUNIT', filter: f => (f.properties.ADM0_A3 === 'GBR' || f.properties.SOV_A3 === 'GB1') }
+  );
+
+  fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
+    .then(r => r.json())
+    .then(data => {
+      items = data.features.map(f => ({
+        name: f.properties.name,
+        koName: ko[f.properties.name] || f.properties.name,
+        geometry: f.geometry,
+        iso: f.id
+      })).sort((a, b) => a.name.localeCompare(b.name));
+
+      // Clickable country borders — click to add as draggable
+      L.geoJSON(data, {
+        style: { color: '#8a8a8a', weight: 1, opacity: 0.85, fillColor: '#000', fillOpacity: 0 },
+        onEachFeature: (feature, sub) => {
+          const name = feature.properties.name;
+          const koName = ko[name] || name;
+          sub.bindTooltip(`${koName} · ${name}`, { sticky: true });
+          sub.on('mouseover', () => sub.setStyle({ fillOpacity: 0.08 }));
+          sub.on('mouseout',  () => sub.setStyle({ fillOpacity: 0 }));
+          sub.on('click', (e) => {
+            L.DomEvent.stopPropagation(e);
+            addCountry({ name, koName, geometry: feature.geometry, iso: feature.id });
+          });
+        }
+      }).addTo(map);
+
+      // Country name labels (English), hidden at low zoom via updateLabelVisibility
+      data.features.forEach(f => {
+        const c = featureCenter(f);
+        if (!c) return;
+        const area = featureArea(f);
+        const marker = L.marker(c, {
+          icon: L.divIcon({ className: 'country-label', html: f.properties.name }),
+          interactive: false,
+          keyboard: false
+        });
+        marker._minZoom = labelMinZoom(area);
+        countryLabels.push(marker);
+      });
+      updateLabelVisibility();
+    })
+    .catch(e => {
+      resultsEl.innerHTML = '<div class="result">데이터 로드 실패 / Failed to load data</div>';
+      console.error(e);
+    });
+
+  searchEl.addEventListener('input', () => {
+    const q = searchEl.value.trim().toLowerCase();
+    if (!q) { resultsEl.innerHTML = ''; return; }
+    const matches = items.filter(c =>
+      c.name.toLowerCase().includes(q) || c.koName.toLowerCase().includes(q)
+    ).slice(0, 8);
+    resultsEl.innerHTML = matches.map(c =>
+      `<div class="result" data-name="${c.name}" data-state="${c.isState ? 1 : 0}">` +
+        `<span>${c.koName}${c.isState ? ' <em style="color:#999;font-style:normal">(US)</em>' : ''}</span>` +
+        `<span class="en">${c.name}</span>` +
+      `</div>`
+    ).join('');
+  });
+
+  resultsEl.addEventListener('click', (e) => {
+    const row = e.target.closest('.result');
+    if (!row) return;
+    const item = items.find(c => c.name === row.dataset.name && !!c.isState === (row.dataset.state === '1'));
+    if (item) addCountry(item);
+    searchEl.value = '';
+    resultsEl.innerHTML = '';
+  });
+
+  let hueStep = 0;
+  function nextColor() {
+    hueStep = (hueStep + 73) % 360;
+    return `hsl(${hueStep}, 75%, 48%)`;
+  }
+
+  const activeInfoEl = document.getElementById('active-info');
+  function setActive(layer) {
+    if (activeLayer && activeLayer !== layer && activeLayer._baseColor) {
+      activeLayer.setStyle({ weight: 2, color: activeLayer._baseColor });
+    }
+    activeLayer = layer;
+    updateControlsEnabled();
+    if (layer) {
+      layer.setStyle({ weight: 1.5, color: '#333' });
+      renderActiveInfo(layer);
+    } else {
+      activeInfoEl.classList.add('empty');
+      activeInfoEl.textContent = '선택된 나라/주 없음 · Nothing selected';
+    }
+  }
+
+  const infoCache = {};
+  async function fetchCountryInfo(iso) {
+    if (!iso) return null;
+    if (infoCache[iso]) return infoCache[iso];
+    try {
+      const res = await fetch(`https://restcountries.com/v3.1/alpha/${iso}?fields=flags,population,area,capital,region,name`);
+      if (!res.ok) throw new Error('not found');
+      const data = await res.json();
+      infoCache[iso] = Array.isArray(data) ? data[0] : data;
+      return infoCache[iso];
+    } catch (e) { return null; }
+  }
+
+  function wikiUrl(name) {
+    return `https://en.wikipedia.org/wiki/${encodeURIComponent(name.replace(/ /g, '_'))}`;
+  }
+
+  const fmtNum = (n) => (n == null ? '-' : Number(n).toLocaleString());
+
+  async function renderActiveInfo(layer) {
+    const meta = layer._meta || {};
+    const subTag = meta.isState ? ` <span style="color:#999;font-weight:normal">(${meta.country || 'sub'})</span>` : '';
+    const head =
+      `<div><b>${meta.koName || '-'}</b>${subTag}</div>` +
+      `<div class="info-sub">${meta.name || '-'}</div>`;
+
+    activeInfoEl.classList.remove('empty');
+
+    if (meta.isState) {
+      // Try normalized name variants so Korean/UK forms with suffixes still match subInfo
+      const variants = [
+        meta.name,
+        meta.name.replace(/ Province$/, ''),
+        meta.name.replace(/-do$/, ''),
+        meta.name.replace(/-do Province$/, ''),
+        meta.name.replace(/ Special Self-Governing Province$/, ''),
+        meta.name.replace(/특별시$|광역시$|특별자치시$|특별자치도$|도$/, '')
+      ];
+      let info, rank, matchedKey;
+      for (const v of variants) {
+        const k = `${meta.country}:${v}`;
+        if (subInfo[k]) { info = subInfo[k]; matchedKey = k; break; }
+      }
+      for (const v of variants) {
+        const k = `${meta.country}:${v}`;
+        if (subRanks[k]) { rank = subRanks[k]; break; }
+      }
+      const total = subCountryTotals[meta.country];
+      const flagSrc = subFlagUrl(meta.name);
+      let body = '';
+      if (info) {
+        body = `
+          <div class="info-body">
+            <img class="flag" src="${flagSrc}" alt="flag" onerror="this.style.display='none'">
+            <dl>
+              <dt>인구 · Population</dt><dd>${fmtNum(info.pop)}</dd>
+              <dt>면적 · Area</dt><dd>${fmtNum(info.area)} km²</dd>
+              ${rank ? `<dt>${meta.country} 내 면적 순위 · Rank</dt><dd>#${rank} / ${total}</dd>` : ''}
+            </dl>
+          </div>`;
+      } else {
+        body = `<div class="info-sub" style="margin-top:6px">상세 정보 없음 · No detailed info</div>`;
+      }
+      activeInfoEl.innerHTML = head + body +
+        `<a class="wiki-link" href="${wikiUrl(meta.name)}" target="_blank" rel="noopener">위키백과에서 보기 · View on Wikipedia ↗</a>`;
+      return;
+    }
+
+    activeInfoEl.innerHTML = head + `<div class="info-loading">정보 불러오는 중…</div>`;
+    const info = await fetchCountryInfo(meta.iso);
+    if (activeLayer !== layer) return;
+
+    if (!info) {
+      activeInfoEl.innerHTML = head +
+        `<a class="wiki-link" href="${wikiUrl(meta.name)}" target="_blank" rel="noopener">위키백과에서 보기 · View on Wikipedia ↗</a>`;
+      return;
+    }
+
+    const wikiName = (info.name && info.name.common) || meta.name;
+    const rank = countryAreaRank[meta.iso];
+    activeInfoEl.innerHTML = head + `
+      <div class="info-body">
+        <img class="flag" src="${info.flags.svg || info.flags.png}" alt="flag">
+        <dl>
+          <dt>인구 · Population</dt><dd>${fmtNum(info.population)}</dd>
+          <dt>면적 · Area</dt><dd>${fmtNum(info.area)} km²</dd>
+          ${rank ? `<dt>세계 면적 순위 · World area rank</dt><dd>#${rank} / ${countryTotal}</dd>` : ''}
+          ${info.capital && info.capital[0] ? `<dt>수도 · Capital</dt><dd>${info.capital[0]}</dd>` : ''}
+          ${info.region ? `<dt>지역 · Region</dt><dd>${info.region}</dd>` : ''}
+        </dl>
+      </div>
+      <a class="wiki-link" href="${wikiUrl(wikiName)}" target="_blank" rel="noopener">위키백과에서 보기 · View on Wikipedia ↗</a>
+    `;
+  }
+
+  function shiftLayer(groupLayer, dLat, dLng) {
+    groupLayer.eachLayer(sub => {
+      if (sub.setLatLngs) sub.setLatLngs(shiftLatLngs(sub.getLatLngs(), dLat, dLng));
+    });
+  }
+
+  // Rotate a GeoJSON layer around its centroid by angleDeg (positive = clockwise on screen)
+  function rotateLayer(groupLayer, angleDeg) {
+    const rad = angleDeg * Math.PI / 180;
+    const cos = Math.cos(rad), sin = Math.sin(rad);
+    const center = groupLayer.getBounds().getCenter();
+    const cp = map.latLngToLayerPoint(center);
+    const rotate = (ll) => {
+      if (Array.isArray(ll)) return ll.map(rotate);
+      const p = map.latLngToLayerPoint(ll);
+      const dx = p.x - cp.x, dy = p.y - cp.y;
+      // screen y is flipped; positive angle → clockwise visually
+      const nx = dx * cos + dy * sin;
+      const ny = -dx * sin + dy * cos;
+      return map.layerPointToLatLng(L.point(cp.x + nx, cp.y + ny));
+    };
+    groupLayer.eachLayer(sub => {
+      if (sub.setLatLngs) sub.setLatLngs(rotate(sub.getLatLngs()));
+    });
+  }
+
+  function updateControlsEnabled() {
+    document.querySelectorAll('#controls button').forEach(b => b.disabled = !activeLayer);
+  }
+
+  document.getElementById('controls').addEventListener('click', (e) => {
+    const btn = e.target.closest('button');
+    if (!btn || !activeLayer) return;
+    const act = btn.dataset.act;
+    const mult = e.shiftKey ? 5 : 1;
+    if (act === 'up')    shiftLayer(activeLayer,  1 * mult, 0);
+    else if (act === 'down')  shiftLayer(activeLayer, -1 * mult, 0);
+    else if (act === 'left')  shiftLayer(activeLayer, 0, -1 * mult);
+    else if (act === 'right') shiftLayer(activeLayer, 0,  1 * mult);
+    else if (act === 'ccw')   rotateLayer(activeLayer, -15 * mult);
+    else if (act === 'cw')    rotateLayer(activeLayer,  15 * mult);
+  });
+
+  updateControlsEnabled();
+
+  document.getElementById('sub-toggle-cb').addEventListener('change', (e) => {
+    subsVisible = e.target.checked;
+    applySubsVisibility();
+  });
+
+  function addCountry(country) {
+    const color = nextColor();
+    const layer = L.geoJSON(country.geometry, {
+      style: { color, weight: 2, fillOpacity: 0.45, fillColor: color }
+    }).addTo(map);
+    layer._baseColor = color;
+    layer._meta = { name: country.name, koName: country.koName, isState: !!country.isState, iso: country.iso, country: country.country };
+    layer.bindTooltip(`${country.koName} · ${country.name}`, { sticky: true });
+    makeDraggable(layer);
+    try { map.fitBounds(layer.getBounds(), { padding: [60, 60], maxZoom: 5 }); } catch (_) {}
+
+    const chip = document.createElement('span');
+    chip.className = 'chip';
+    chip.style.background = color;
+    chip.innerHTML = `${country.koName}${country.isState ? ' (US)' : ''} <button title="제거">×</button>`;
+    chip.addEventListener('click', (e) => {
+      if (e.target.tagName === 'BUTTON') return;
+      setActive(layer);
+    });
+    chip.querySelector('button').addEventListener('click', () => {
+      map.removeLayer(layer);
+      chip.remove();
+      const idx = layers.indexOf(layer); if (idx >= 0) layers.splice(idx, 1);
+      if (activeLayer === layer) activeLayer = null;
+    });
+    addedEl.appendChild(chip);
+    layers.push(layer);
+    setActive(layer);
+  }
+
+  document.getElementById('clear').addEventListener('click', () => {
+    layers.forEach(l => map.removeLayer(l));
+    layers.length = 0;
+    addedEl.innerHTML = '';
+    activeLayer = null;
+  });
+
+  // Arrow-key nudge for the active layer (shift = 5°, plain = 1°)
+  document.addEventListener('keydown', (e) => {
+    if (!activeLayer) return;
+    if (document.activeElement === searchEl) return;
+    const step = e.shiftKey ? 5 : 1;
+    let dLat = 0, dLng = 0;
+    if (e.key === 'ArrowUp') dLat = step;
+    else if (e.key === 'ArrowDown') dLat = -step;
+    else if (e.key === 'ArrowLeft') dLng = -step;
+    else if (e.key === 'ArrowRight') dLng = step;
+    else if (e.key === 'q' || e.key === 'Q') { e.preventDefault(); rotateLayer(activeLayer, -15 * (e.shiftKey ? 3 : 1)); return; }
+    else if (e.key === 'e' || e.key === 'E') { e.preventDefault(); rotateLayer(activeLayer,  15 * (e.shiftKey ? 3 : 1)); return; }
+    else return;
+    e.preventDefault();
+    shiftLayer(activeLayer, dLat, dLng);
+  });
+
+  // Shift every LatLng in a (possibly nested) latlngs array by (dLat, dLng)
+  function shiftLatLngs(ll, dLat, dLng) {
+    if (Array.isArray(ll)) return ll.map(x => shiftLatLngs(x, dLat, dLng));
+    return L.latLng(ll.lat + dLat, ll.lng + dLng);
+  }
+
+  // Shared drag state — lets us bind global mouse/touch move handlers once
+  const mapEl = map.getContainer();
+  let dragLayer = null;
+  let dragLast = null;
+
+  function touchToLatLng(touch) {
+    const rect = mapEl.getBoundingClientRect();
+    return map.containerPointToLatLng(L.point(touch.clientX - rect.left, touch.clientY - rect.top));
+  }
+  function startDrag(layer, latlng, origEvent) {
+    dragLayer = layer;
+    dragLast = latlng;
+    setActive(layer);
+    map.dragging.disable();
+    mapEl.classList.add('dragging-country');
+    if (origEvent) {
+      L.DomEvent.stopPropagation(origEvent);
+      L.DomEvent.preventDefault(origEvent);
+    }
+  }
+  function moveDrag(latlng) {
+    if (!dragLayer) return;
+    const dLat = latlng.lat - dragLast.lat;
+    const dLng = latlng.lng - dragLast.lng;
+    shiftLayer(dragLayer, dLat, dLng);
+    dragLast = latlng;
+  }
+  function endDrag() {
+    if (!dragLayer) return;
+    dragLayer = null;
+    dragLast = null;
+    map.dragging.enable();
+    mapEl.classList.remove('dragging-country');
+  }
+
+  map.on('mousemove', (e) => moveDrag(e.latlng));
+  map.on('mouseup', endDrag);
+  map.on('mouseout', endDrag);
+
+  mapEl.addEventListener('touchmove', (e) => {
+    if (!dragLayer || !e.touches[0]) return;
+    moveDrag(touchToLatLng(e.touches[0]));
+    e.preventDefault();
+  }, { passive: false });
+  mapEl.addEventListener('touchend', endDrag);
+  mapEl.addEventListener('touchcancel', endDrag);
+
+  function makeDraggable(groupLayer) {
+    groupLayer.eachLayer(sub => {
+      sub.on('mousedown', (e) => startDrag(groupLayer, e.latlng, e.originalEvent));
+      if (sub._path) {
+        L.DomEvent.on(sub._path, 'touchstart', (e) => {
+          if (!e.touches[0]) return;
+          startDrag(groupLayer, touchToLatLng(e.touches[0]), e);
+        });
+      }
+    });
+  }
+
+  // Panel collapse toggle (useful on mobile)
+  const panelEl = document.getElementById('panel');
+  const panelToggleEl = document.getElementById('panel-toggle');
+  panelToggleEl.addEventListener('click', () => {
+    const collapsed = panelEl.classList.toggle('collapsed');
+    panelToggleEl.textContent = collapsed ? '+' : '−';
+  });
+  // Auto-collapse on small screens at start
+  if (window.matchMedia('(max-width: 640px)').matches) {
+    panelEl.classList.add('collapsed');
+    panelToggleEl.textContent = '+';
+  }
+})();
+</script>
+</body>
+</html>
