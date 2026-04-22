@@ -134,7 +134,7 @@
     <input type="checkbox" id="sub-toggle-cb">
     <span class="sub-label">
       주/도 보기 · Show subdivisions
-      <small>미국·캐나다·멕시코를 주/도 단위로 클릭</small>
+      <small>전세계 나라의 주/도 단위 클릭 (~4,400개)</small>
     </span>
   </label>
   <div id="active-info" class="empty">선택된 나라/주 없음 · Nothing selected</div>
@@ -714,6 +714,59 @@
     }).catch(e => console.error(`Subdivisions load failed (${code})`, e));
   }
 
+  // Load every country's admin-1 from Natural Earth, EXCEPT countries we already loaded
+  // separately (they have nicer geometry + Korean names + detailed info).
+  function loadGlobalSubdivisions(url, excludeCodes) {
+    const exclude = new Set(excludeCodes);
+    const canvasRenderer = L.canvas({ padding: 0.3 });
+    return fetch(url).then(r => r.json()).then(data => {
+      // Group features by country code (iso_a2)
+      const byCountry = {};
+      data.features.forEach(f => {
+        const p = f.properties || {};
+        const code = p.iso_a2;
+        if (!code || code === '-99' || exclude.has(code)) return;
+        if (!p.name) return;
+        if (!byCountry[code]) byCountry[code] = [];
+        byCountry[code].push(f);
+      });
+
+      Object.entries(byCountry).forEach(([code, feats]) => {
+        // Searchable items only — skip on-map labels for the global set to keep
+        // pan/zoom snappy (4400 markers would tank performance).
+        feats.forEach(f => {
+          items.push({
+            name: f.properties.name, koName: f.properties.name,
+            geometry: f.geometry,
+            isState: true, country: code
+          });
+        });
+
+        // ONE Leaflet layer per country (much faster than per-feature)
+        // Canvas renderer handles many polygons more efficiently than SVG.
+        const layer = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+          renderer: canvasRenderer,
+          style: { color: '#9a9a9a', weight: 0.5, opacity: 0.6, fillColor: '#000', fillOpacity: 0 },
+          onEachFeature: (feature, sub) => {
+            const name = feature.properties.name;
+            sub.bindTooltip(`${name} (${code})`, { sticky: true });
+            sub.on('mouseover', () => sub.setStyle({ fillOpacity: 0.12, weight: 1 }));
+            sub.on('mouseout',  () => sub.setStyle({ fillOpacity: 0, weight: 0.5 }));
+            sub.on('click', (e) => {
+              L.DomEvent.stopPropagation(e);
+              addCountry({ name, koName: name, geometry: feature.geometry, isState: true, country: code });
+            });
+          }
+        });
+        subBaseLayers.push(layer);
+      });
+
+      items.sort((a, b) => a.name.localeCompare(b.name));
+      if (subsVisible) applySubsVisibility();
+      console.log(`Global subdivisions loaded: ${Object.keys(byCountry).length} countries, ${data.features.length} features`);
+    }).catch(e => console.error('Global subdivisions load failed', e));
+  }
+
   function applySubsVisibility() {
     subBaseLayers.forEach(l => {
       if (subsVisible) l.addTo(map);
@@ -735,6 +788,12 @@
     'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_0_map_subunits.geojson',
     'GB', koUK,
     { nameProp: 'SUBUNIT', filter: f => (f.properties.ADM0_A3 === 'GBR' || f.properties.SOV_A3 === 'GB1') }
+  );
+
+  // ALL OTHER COUNTRIES: Natural Earth admin-1 (~4400 features). One fetch.
+  loadGlobalSubdivisions(
+    'https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_50m_admin_1_states_provinces.geojson',
+    ['US', 'CA', 'MX', 'BR', 'JP', 'CN', 'KR', 'AU', 'GB']
   );
 
   fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
