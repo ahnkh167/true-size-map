@@ -143,7 +143,7 @@
     <input type="checkbox" id="sub-toggle-cb">
     <span class="sub-label">
       주/도 보기 · Show subdivisions
-      <small>주요 18개국의 주/도 클릭 가능 (US, CA, MX, BR, JP, CN, KR, AU, GB, DE, FR, IT, ES, IN, RU, PT, CH, ID)</small>
+      <small>27개국 주/도 클릭 가능 (미국·캐나다·멕시코·브라질·일본·중국·한국·호주·영국·독일·프랑스·이탈리아·스페인·인도·러시아·포르투갈·스위스·인도네시아·북한·태국·베트남·아르헨티나·칠레·이란·사우디·우크라이나·폴란드)</small>
     </span>
   </label>
   <div id="active-info" class="empty">선택된 나라/주 없음 · Nothing selected</div>
@@ -836,6 +836,96 @@
     "Ticino":"티치노","Uri":"우리","Valais":"발레","Vaud":"보","Zug":"추크","Zürich":"취리히"
   };
 
+  // Korean dictionaries for the additional 10 countries
+  const koProvincesPRK = {
+    "Pyongyang":"평양","Nampo":"남포","Jagang":"자강도","Kangwon":"강원도",
+    "North Hamgyong":"함경북도","South Hamgyong":"함경남도",
+    "North Hwanghae":"황해북도","South Hwanghae":"황해남도",
+    "North Pyongan":"평안북도","South Pyongan":"평안남도","Ryanggang":"량강도"
+  };
+  const koProvincesTH = {
+    "Bangkok Metropolis":"방콕","Chiang Mai":"치앙마이","Chiang Rai":"치앙라이",
+    "Phuket":"푸껫","Krabi":"끄라비","Chonburi":"촌부리","Rayong":"라용",
+    "Ayutthaya":"아유타야","Surat Thani":"수랏타니","Phang Nga":"팡응아",
+    "Pattani":"빠따니","Songkhla":"송클라","Nakhon Ratchasima":"나콘랏차시마",
+    "Khon Kaen":"콘깬","Udon Thani":"우돈타니","Kanchanaburi":"깐짜나부리",
+    "Sukhothai":"수코타이","Lampang":"람빵","Lamphun":"람푼"
+  };
+  const koProvincesVN = {
+    "Hà Nội":"하노이","Ho Chi Minh":"호찌민","Đà Nẵng":"다낭",
+    "Hải Phòng":"하이퐁","Cần Thơ":"껀터","Quảng Ninh":"꽝닌",
+    "Lào Cai":"라오까이","Lạng Sơn":"랑선","Cao Bằng":"까오방",
+    "Khánh Hòa":"카인호아","Bà Rịa–Vũng Tàu":"바리아붕따우","Bình Dương":"빈즈엉",
+    "Đồng Nai":"동나이","Long An":"롱안","Tiền Giang":"띠엔장",
+    "An Giang":"안장","Kiên Giang":"끼엔장","Cà Mau":"까마우",
+    "Thừa Thiên Huế":"투아티엔후에","Quảng Nam":"꽝남","Bình Định":"빈딘",
+    "Thanh Hóa":"타인호아","Nghệ An":"응에안","Hà Tĩnh":"하띤"
+  };
+  const koProvincesAR2 = {
+    "Buenos Aires":"부에노스아이레스주","Catamarca":"카타마르카","Chaco":"차코",
+    "Chubut":"추부트","Ciudad Autónoma de Buenos Aires":"부에노스아이레스시",
+    "Corrientes":"코리엔테스","Córdoba":"코르도바","Formosa":"포르모사",
+    "Jujuy":"후후이","La Pampa":"라팜파","La Roja":"라리오하","La Rioja":"라리오하",
+    "Mendoza":"멘도사","Misiones":"미시오네스","Neuquén":"네우켄","Río Negro":"리오네그로",
+    "Salta":"살타","San Juan":"산후안","San Luis":"산루이스","Santa Cruz":"산타크루스",
+    "Santa Fe":"산타페","Santiago del Estero":"산티아고델에스테로",
+    "Tierra del Fuego":"티에라델푸에고","Tucumán":"투쿠만"
+  };
+  const koRegionsCL = {
+    "Región de Arica y Parinacota":"아리카이파리나코타주","Región de Tarapacá":"타라파카주",
+    "Región de Antofagasta":"안토파가스타주","Región de Atacama":"아타카마주",
+    "Región de Coquimbo":"코킴보주","Región de Valparaíso":"발파라이소주",
+    "Región Metropolitana de Santiago":"산티아고 수도주",
+    "Región del Libertador Bernardo O'Higgins":"오이긴스주","Región del Maule":"마울레주",
+    "Región de Ñuble":"뉴블레주","Región del Bío-Bío":"비오비오주",
+    "Región de La Araucanía":"라아라우카니아주","Región de Los Ríos":"로스리오스주",
+    "Región de Los Lagos":"로스라고스주","Región Aysén del General Carlos Ibáñez del Campo":"아이센주",
+    "Región Aysén":"아이센주","Región de Magallanes y de la Antártica Chilena":"마가야네스주",
+    "Región de Magallanes":"마가야네스주"
+  };
+  const koProvincesIR = {
+    "Alborz":"알보르즈","Ardabil":"아르다빌","Bushehr":"부셰흐르",
+    "Chaharmahal and Bakhtiari":"차하르마할바흐티아리","East Azerbaijan":"동아제르바이잔",
+    "Fars":"파르스","Gilan":"길란","Golestan":"골레스탄","Hamadan":"하마단",
+    "Hormozgan":"호르모즈간","Ilam":"일람","Isfahan":"이스파한","Kerman":"케르만",
+    "Kermanshah":"케르만샤","Khuzestan":"후제스탄",
+    "Kohgiluyeh and Boyer-Ahmad":"코기루예바보예라흐마드","Kurdistan":"쿠르디스탄",
+    "Lorestan":"로레스탄","Markazi":"마르카지","Mazandaran":"마잔다란",
+    "North Khorasan":"북호라산","Qazvin":"카즈빈","Qom":"쿰",
+    "Razavi Khorasan":"라자비호라산","Semnan":"셈난",
+    "Sistan and Baluchestan":"시스탄바루체스탄","South Khorasan":"남호라산",
+    "Tehran":"테헤란","West Azerbaijan":"서아제르바이잔","Yazd":"야즈드","Zanjan":"잔잔"
+  };
+  const koRegionsSA = {
+    "'Asir Region":"아시르주","Al Bahah Region":"알바하주","Al Jawf Region":"알자우프주",
+    "Al Madinah Region":"메디나주","Al-Qassim Region":"카심주","Eastern Region":"동부주",
+    "Hayel Region":"하일주","Jazan Region":"자잔주","Makkah Region":"메카주",
+    "Najran Region":"나즈란주","Northern Borders Region":"북부 국경주",
+    "Riyadh Region":"리야드주","Tabuk Region":"타부크주"
+  };
+  const koOblastsUA = {
+    "Autonomous Republic of Crimea":"크림 자치공화국","Cherkasy Oblast":"체르카시주",
+    "Chernihiv Oblast":"체르니히우주","Chernivtsi Oblast":"체르니우치주",
+    "Dnipropetrovsk Oblast":"드니프로페트로우시크주","Donetsk Oblast":"도네츠크주",
+    "Ivano-Frankivsk Oblast":"이바노프란키우시크주","Kharkiv Oblast":"하르키우주",
+    "Kherson Oblast":"헤르손주","Khmelnytskyi Oblast":"흐멜니츠키주",
+    "Kiev Oblast":"키이우주","Kirovohrad Oblast":"키로보흐라드주",
+    "Luhansk Oblast":"루한스크주","Lviv Oblast":"리비우주","Mykolaiv Oblast":"미콜라이우주",
+    "Odessa Oblast":"오데사주","Poltava Oblast":"폴타바주","Rivne Oblast":"리우네주",
+    "Sumy Oblast":"수미주","Ternopil Oblast":"테르노필주","Vinnytsia Oblast":"빈니차주",
+    "Volyn Oblast":"볼린주","Zakarpattia Oblast":"자카르파탸주",
+    "Zaporizhia Oblast":"자포리자주","Zhytomyr Oblast":"지토미르주"
+  };
+  const koVoivodeshipsPL = {
+    "Dolnośląskie":"돌니실롱스크주","Kujawsko-Pomorskie":"쿠야비포모제주",
+    "Lubelskie":"루블린주","Lubuskie":"루부시주","Łódzkie":"우치주",
+    "Małopolskie":"소폴란드주","Mazowieckie":"마조프셰주","Opolskie":"오폴레주",
+    "Podkarpackie":"카르파티아 기슭주","Podlaskie":"포들라스키에주","Pomorskie":"포모제주",
+    "Śląskie":"슐레지엔주","Świętokrzyskie":"시비엥토크시스카주",
+    "Warmińsko-Mazurskie":"바르미아마주리주","Wielkopolskie":"대폴란드주",
+    "Zachodniopomorskie":"서포모제주"
+  };
+
   loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/germany.geojson', 'DE', koStatesDE);
   loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/france-regions.geojson', 'FR', koRegionsFR);
   loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/italy-regions.geojson', 'IT', koRegionsIT);
@@ -845,6 +935,17 @@
   loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/portugal.geojson', 'PT', {});
   loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/switzerland.geojson', 'CH', koCantonsCH);
   loadSubdivisions('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-province-simple.json', 'ID', {});
+
+  // Additional 9 countries (PRK/TH/VN/AR/CL/IR/SA/UA/PL) — geoBoundaries + curated sources
+  loadSubdivisions('https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/gbOpen/PRK/ADM1/geoBoundaries-PRK-ADM1_simplified.geojson', 'PRK', koProvincesPRK, { nameProp: 'shapeName' });
+  loadSubdivisions('https://raw.githubusercontent.com/apisit/thailand.json/master/thailand.json', 'TH', koProvincesTH);
+  loadSubdivisions('https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/gbOpen/VNM/ADM1/geoBoundaries-VNM-ADM1_simplified.geojson', 'VN', koProvincesVN, { nameProp: 'shapeName' });
+  loadSubdivisions('https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/gbOpen/ARG/ADM1/geoBoundaries-ARG-ADM1_simplified.geojson', 'AR', koProvincesAR2, { nameProp: 'shapeName' });
+  loadSubdivisions('https://raw.githubusercontent.com/caracena/chile-geojson/master/regiones.json', 'CL', koRegionsCL, { nameProp: 'Region' });
+  loadSubdivisions('https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/gbOpen/IRN/ADM1/geoBoundaries-IRN-ADM1_simplified.geojson', 'IR', koProvincesIR, { nameProp: 'shapeName' });
+  loadSubdivisions('https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/9469f09/releaseData/gbOpen/SAU/ADM1/geoBoundaries-SAU-ADM1_simplified.geojson', 'SA', koRegionsSA, { nameProp: 'shapeName' });
+  loadSubdivisions('https://raw.githubusercontent.com/EugeneBorshch/ukraine_geojson/master/UA_FULL_Ukraine.geojson', 'UA', koOblastsUA, { nameProp: 'name:en' });
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/poland.geojson', 'PL', koVoivodeshipsPL);
 
   fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
     .then(r => r.json())
