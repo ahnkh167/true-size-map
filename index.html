@@ -143,7 +143,7 @@
     <input type="checkbox" id="sub-toggle-cb">
     <span class="sub-label">
       주/도 보기 · Show subdivisions
-      <small>전세계 나라의 주/도 단위 클릭 (~4,400개)</small>
+      <small>주요 18개국의 주/도 클릭 가능 (US, CA, MX, BR, JP, CN, KR, AU, GB, DE, FR, IT, ES, IN, RU, PT, CH, ID)</small>
     </span>
   </label>
   <div id="active-info" class="empty">선택된 나라/주 없음 · Nothing selected</div>
@@ -723,8 +723,9 @@
     }).catch(e => console.error(`Subdivisions load failed (${code})`, e));
   }
 
-  // Load every country's admin-1 from Natural Earth, EXCEPT countries we already loaded
-  // separately (they have nicer geometry + Korean names + detailed info).
+  // (Reserved) Global loader — kept for future use, currently unused since
+  // a per-country approach gives better data and Korean names.
+  // eslint-disable-next-line no-unused-vars
   function loadGlobalSubdivisions(url, excludeCodes) {
     const exclude = new Set(excludeCodes);
     const canvasRenderer = L.canvas({ padding: 0.3 });
@@ -799,11 +800,51 @@
     { nameProp: 'SUBUNIT', filter: f => (f.properties.ADM0_A3 === 'GBR' || f.properties.SOV_A3 === 'GB1') }
   );
 
-  // ALL OTHER COUNTRIES: Natural Earth admin-1 (~4400 features, 2.2 MB). jsDelivr CDN for speed + caching.
-  loadGlobalSubdivisions(
-    'https://cdn.jsdelivr.net/gh/nvkelso/natural-earth-vector@master/geojson/ne_50m_admin_1_states_provinces.geojson',
-    ['US', 'CA', 'MX', 'BR', 'JP', 'CN', 'KR', 'AU', 'GB']
-  );
+  // Additional major countries — per-country sources from click_that_hood + community repos.
+  // Korean names are sparse for these; Wikipedia API fills in Korean descriptions on click.
+  const koStatesDE = {
+    "Baden-Württemberg":"바덴뷔르템베르크","Bayern":"바이에른","Berlin":"베를린",
+    "Brandenburg":"브란덴부르크","Bremen":"브레멘","Hamburg":"함부르크",
+    "Hessen":"헤센","Mecklenburg-Vorpommern":"메클렌부르크포어포메른",
+    "Niedersachsen":"니더작센","Nordrhein-Westfalen":"노르트라인베스트팔렌",
+    "Rheinland-Pfalz":"라인란트팔츠","Saarland":"자를란트","Sachsen":"작센",
+    "Sachsen-Anhalt":"작센안할트","Schleswig-Holstein":"슐레스비히홀슈타인","Thüringen":"튀링겐"
+  };
+  const koRegionsFR = {
+    "Alsace":"알자스","Aquitaine":"아키텐","Auvergne":"오베르뉴","Basse-Normandie":"바스노르망디",
+    "Bourgogne":"부르고뉴","Bretagne":"브르타뉴","Centre":"상트르","Champagne-Ardenne":"샹파뉴아르덴",
+    "Corse":"코르시카","Franche-Comté":"프랑슈콩테","Haute-Normandie":"오트노르망디",
+    "Île-de-France":"일드프랑스","Languedoc-Roussillon":"랑그도크루시용","Limousin":"리무쟁",
+    "Lorraine":"로렌","Midi-Pyrénées":"미디피레네","Nord-Pas-de-Calais":"노르파드칼레",
+    "Pays de la Loire":"페이드라루아르","Picardie":"피카르디","Poitou-Charentes":"푸아투샤랑트",
+    "Provence-Alpes-Côte d'Azur":"프로방스알프코트다쥐르","Rhône-Alpes":"론알프"
+  };
+  const koRegionsIT = {
+    "Abruzzo":"아브루초","Basilicata":"바실리카타","Calabria":"칼라브리아","Campania":"캄파니아",
+    "Emilia-Romagna":"에밀리아로마냐","Friuli-Venezia Giulia":"프리울리베네치아줄리아","Lazio":"라치오",
+    "Liguria":"리구리아","Lombardia":"롬바르디아","Marche":"마르케","Molise":"몰리세",
+    "Piemonte":"피에몬테","Puglia":"풀리아","Sardegna":"사르데냐","Sicilia":"시칠리아",
+    "Toscana":"토스카나","Trentino-Alto Adige":"트렌티노알토아디제","Umbria":"움브리아",
+    "Valle d'Aosta":"발레다오스타","Veneto":"베네토"
+  };
+  const koCantonsCH = {
+    "Aargau":"아르가우","Appenzell Ausserrhoden":"아펜첼 아우서로덴","Appenzell Innerrhoden":"아펜첼 이너로덴",
+    "Basel-Landschaft":"바젤란트","Basel-Stadt":"바젤슈타트","Bern":"베른","Fribourg":"프리부르",
+    "Genève":"제네바","Glarus":"글라루스","Graubünden":"그라우뷘덴","Jura":"쥐라","Luzern":"루체른",
+    "Neuchâtel":"뇌샤텔","Nidwalden":"니트발덴","Obwalden":"옵발덴","Schaffhausen":"샤프하우젠",
+    "Schwyz":"슈비츠","Solothurn":"졸로투른","St. Gallen":"장크트갈렌","Thurgau":"투르가우",
+    "Ticino":"티치노","Uri":"우리","Valais":"발레","Vaud":"보","Zug":"추크","Zürich":"취리히"
+  };
+
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/germany.geojson', 'DE', koStatesDE);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/france-regions.geojson', 'FR', koRegionsFR);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/italy-regions.geojson', 'IT', koRegionsIT);
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/spain-provinces.geojson', 'ES', {});
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/india.geojson', 'IN', {});
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/russia.geojson', 'RU', {}, { nameProp: 'name_latin' });
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/portugal.geojson', 'PT', {});
+  loadSubdivisions('https://raw.githubusercontent.com/codeforamerica/click_that_hood/master/public/data/switzerland.geojson', 'CH', koCantonsCH);
+  loadSubdivisions('https://raw.githubusercontent.com/superpikar/indonesia-geojson/master/indonesia-province-simple.json', 'ID', {});
 
   fetch('https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json')
     .then(r => r.json())
