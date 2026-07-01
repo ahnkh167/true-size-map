@@ -30,12 +30,31 @@ function shuffle(arr) {
   return a;
 }
 
-async function boot() {
-  const res = await fetch('data/hangul.json');
-  const data = await res.json();
-  stage = data.stages[0];
+// Built-in copy of the first stage so the game still runs when the page is
+// opened directly from disk (file://), where fetch() is blocked by the browser.
+const FALLBACK_STAGE = {
+  id: 'vowels-1', title: 'First Vowels', titleKo: '첫 모음',
+  letters: [
+    { id: 'a',  char: 'ㅏ', sound: '아', romaji: 'a',  hint: 'ah — like in f̲a̲ther' },
+    { id: 'eo', char: 'ㅓ', sound: '어', romaji: 'eo', hint: 'uh — like in d̲u̲ck' },
+    { id: 'o',  char: 'ㅗ', sound: '오', romaji: 'o',  hint: 'oh — like in g̲o̲' },
+    { id: 'u',  char: 'ㅜ', sound: '우', romaji: 'u',  hint: 'oo — like in m̲oo̲n' },
+    { id: 'i',  char: 'ㅣ', sound: '이', romaji: 'i',  hint: 'ee — like in s̲ee̲' }
+  ]
+};
 
-  updateStarCount();
+let dataReady = null;  // resolves once the stage data is ready
+
+function boot() {
+  // Start loading data, but DON'T wait for it before wiring buttons —
+  // otherwise an early tap on Play (before the fetch resolves) does nothing.
+  // Fall back to the built-in stage if fetch fails (e.g. opened via file://).
+  dataReady = fetch('data/hangul.json')
+    .then(res => res.json())
+    .then(data => { stage = data.stages[0]; })
+    .catch(() => { stage = FALLBACK_STAGE; });
+
+  updateStarCount();  // reads localStorage only, no data needed
   $('#btn-play').addEventListener('click', startGame);
   $('#btn-again').addEventListener('click', startGame);
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
@@ -46,7 +65,8 @@ function updateStarCount() {
   $('#total-stars').textContent = Progress.totalStars();
 }
 
-function startGame() {
+async function startGame() {
+  await dataReady;   // make sure letters are loaded (handles early taps)
   queue = shuffle(stage.letters).slice(0, ROUNDS);
   // if fewer than ROUNDS letters, repeat to fill
   while (queue.length < ROUNDS) queue.push(shuffle(stage.letters)[0]);
