@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Hangul Adventure 🐯</title>
+  <style>
+    :root {
+      --bg1: #ffd86b;
+      --bg2: #ff9a5a;
+      --card: #ffffff;
+      --ink: #3a2a1a;
+      --accent: #ff5c8a;
+      --good: #4caf50;
+      --pop: #5b8def;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: 'Comic Sans MS', 'Trebuchet MS', 'Apple SD Gothic Neo', sans-serif;
+      color: var(--ink);
+      background: linear-gradient(160deg, var(--bg1), var(--bg2));
+      overflow: hidden;
+      user-select: none;
+    }
+    .screen {
+      position: absolute; inset: 0;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+    }
+    .screen.active { display: flex; animation: fade .3s ease; }
+    @keyframes fade { from { opacity: 0; transform: scale(.98); } to { opacity: 1; transform: none; } }
+
+    h1 { font-size: clamp(32px, 8vw, 56px); margin: 0 0 6px; text-shadow: 0 3px 0 rgba(255,255,255,.5); }
+    .subtitle { font-size: clamp(16px, 4vw, 22px); opacity: .8; margin-bottom: 28px; }
+
+    .mascot { font-size: clamp(80px, 22vw, 140px); line-height: 1; animation: bob 2s ease-in-out infinite; }
+    @keyframes bob { 0%,100% { transform: translateY(0) rotate(-3deg);} 50% { transform: translateY(-14px) rotate(3deg);} }
+
+    .btn {
+      border: none; cursor: pointer;
+      font-family: inherit; font-weight: bold;
+      font-size: clamp(20px, 5vw, 26px);
+      color: #fff; background: var(--accent);
+      padding: 16px 44px; border-radius: 999px;
+      box-shadow: 0 6px 0 #d63a68, 0 10px 20px rgba(0,0,0,.15);
+      transition: transform .08s, box-shadow .08s;
+    }
+    .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d63a68; }
+    .btn.blue { background: var(--pop); box-shadow: 0 6px 0 #3a68c0, 0 10px 20px rgba(0,0,0,.15); }
+    .btn.blue:active { box-shadow: 0 2px 0 #3a68c0; }
+
+    /* header star counter */
+    .stars-top {
+      position: absolute; top: 16px; right: 18px;
+      background: rgba(255,255,255,.85); border-radius: 999px;
+      padding: 8px 16px; font-size: 20px; font-weight: bold;
+      box-shadow: 0 3px 8px rgba(0,0,0,.12);
+    }
+
+    /* ---- game screen ---- */
+    .progress-dots { display: flex; gap: 10px; margin-bottom: 8px; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.55); }
+    .dot.done { background: var(--good); }
+    .dot.now  { background: #fff; transform: scale(1.35); box-shadow: 0 0 0 4px rgba(255,255,255,.4); }
+
+    .speaker {
+      font-size: 64px; background: #fff; border: none; cursor: pointer;
+      width: 130px; height: 130px; border-radius: 50%;
+      box-shadow: 0 8px 0 #e0a94a, 0 12px 24px rgba(0,0,0,.18);
+      margin: 18px 0 6px; transition: transform .1s;
+    }
+    .speaker:active { transform: scale(.94); }
+    .listen-label { font-size: 18px; opacity: .75; margin-bottom: 18px; }
+
+    .options {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+      width: min(92vw, 440px);
+    }
+    .letter-card {
+      aspect-ratio: 1 / 1;
+      font-size: clamp(52px, 16vw, 88px); font-weight: bold;
+      background: var(--card); color: var(--ink);
+      border: none; border-radius: 24px; cursor: pointer;
+      box-shadow: 0 6px 0 rgba(0,0,0,.15);
+      transition: transform .1s;
+    }
+    .letter-card:active { transform: scale(.96); }
+    .letter-card.correct { background: var(--good); color: #fff; animation: pop .5s; }
+    .letter-card.wrong { animation: shake .4s; }
+    @keyframes pop { 0%{transform:scale(1);} 40%{transform:scale(1.18);} 100%{transform:scale(1);} }
+    @keyframes shake { 0%,100%{transform:translateX(0);} 20%{transform:translateX(-10px);} 40%{transform:translateX(10px);} 60%{transform:translateX(-8px);} 80%{transform:translateX(8px);} }
+
+    .hint { margin-top: 20px; font-size: 18px; opacity: .8; min-height: 24px; }
+
+    /* ---- reward ---- */
+    .reward-stars { display: flex; gap: 12px; margin: 10px 0 6px; }
+    .big-star { font-size: clamp(56px, 16vw, 90px); color: rgba(255,255,255,.5); }
+    .big-star.lit { color: #ffe14d; text-shadow: 0 0 18px #ffcf1a; animation: drop .5s ease both; }
+    .big-star.lit:nth-child(2){ animation-delay:.15s; }
+    .big-star.lit:nth-child(3){ animation-delay:.3s; }
+    @keyframes drop { from{ transform: translateY(-30px) scale(.4); opacity:0;} to{ transform:none; opacity:1;} }
+    .reward-msg { font-size: clamp(24px, 6vw, 34px); font-weight: bold; margin: 14px 0 30px; }
+    .reward-row { display: flex; gap: 14px; }
+
+    /* celebration particles */
+    .particle {
+      position: fixed; font-size: 26px; pointer-events: none; z-index: 50;
+      transform: translate(-50%, -50%);
+      animation: fly .9s ease-out forwards;
+    }
+    @keyframes fly {
+      to { transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(.3); opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- START -->
+  <section id="screen-start" class="screen active">
+    <div class="stars-top">⭐ <span id="total-stars">0</span></div>
+    <div class="mascot">🐯</div>
+    <h1>Hangul Adventure</h1>
+    <div class="subtitle">Learn Korean letters! 한글 배우기</div>
+    <button id="btn-play" class="btn">▶ Play</button>
+  </section>
+
+  <!-- GAME -->
+  <section id="screen-game" class="screen">
+    <div class="progress-dots" id="progress-dots"></div>
+    <button id="speaker" class="speaker" aria-label="Play sound">🔊</button>
+    <div class="listen-label">Listen and tap! 👂</div>
+    <div class="options" id="options"></div>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <!-- REWARD -->
+  <section id="screen-reward" class="screen">
+    <div class="mascot">🐯</div>
+    <div class="reward-stars" id="reward-stars"></div>
+    <div class="reward-msg" id="reward-msg"></div>
+    <div class="reward-row">
+      <button id="btn-again" class="btn">↻ Again</button>
+      <button id="btn-home" class="btn blue">🏠 Home</button>
+    </div>
+  </section>
+
+  <script src="js/audio.js"></script>
+  <script src="js/progress.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

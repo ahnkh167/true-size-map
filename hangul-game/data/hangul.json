@@ -1,0 +1,16 @@
+{
+  "stages": [
+    {
+      "id": "vowels-1",
+      "title": "First Vowels",
+      "titleKo": "첫 모음",
+      "letters": [
+        { "id": "a",  "char": "ㅏ", "sound": "아", "romaji": "a",  "hint": "ah — like in f̲a̲ther" },
+        { "id": "eo", "char": "ㅓ", "sound": "어", "romaji": "eo", "hint": "uh — like in d̲u̲ck" },
+        { "id": "o",  "char": "ㅗ", "sound": "오", "romaji": "o",  "hint": "oh — like in g̲o̲" },
+        { "id": "u",  "char": "ㅜ", "sound": "우", "romaji": "u",  "hint": "oo — like in m̲oo̲n" },
+        { "id": "i",  "char": "ㅣ", "sound": "이", "romaji": "i",  "hint": "ee — like in s̲ee̲" }
+      ]
+    }
+  ]
+}
