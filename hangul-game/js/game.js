@@ -57,20 +57,25 @@ function boot() {
     .catch(() => {});
 
   updateStarCount();  // reads localStorage only, no data needed
-
-  // Diagnostic: prove taps reach the button in any environment.
-  const status = $('#tap-status');
-  const playBtn = $('#btn-play');
-  playBtn.addEventListener('pointerdown', () => { if (status) status.textContent = 'build v4 · tap received ✓'; });
-
-  playBtn.addEventListener('click', startGame);
+  $('#btn-play').addEventListener('click', startGame);
   $('#btn-again').addEventListener('click', startGame);
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
-  $('#speaker').addEventListener('click', () => AudioPlayer.play(queue[roundIndex].sound));
+  $('#speaker').addEventListener('click', () => playSound(queue[roundIndex].sound));
 }
 
 function updateStarCount() {
   $('#total-stars').textContent = Progress.totalStars();
+}
+
+// Play a sound and make the tiger wiggle while it "speaks".
+let wiggleTimer = null;
+function playSound(sound) {
+  AudioPlayer.play(sound);
+  const tiger = $('#speaker');
+  if (!tiger) return;
+  tiger.classList.add('speaking');
+  clearTimeout(wiggleTimer);
+  wiggleTimer = setTimeout(() => tiger.classList.remove('speaking'), 2700);
 }
 
 function startGame() {
@@ -108,7 +113,7 @@ function renderRound() {
   $('#hint').textContent = target.hint;
 
   // auto-play the sound so the child hears the target
-  setTimeout(() => AudioPlayer.play(target.sound), 350);
+  setTimeout(() => playSound(target.sound), 350);
 }
 
 function onPick(opt, target, card) {
@@ -123,7 +128,7 @@ function onPick(opt, target, card) {
     mistakes++;
     card.classList.add('wrong');
     card.addEventListener('animationend', () => card.classList.remove('wrong'), { once: true });
-    AudioPlayer.play(target.sound); // replay so they can try again
+    playSound(target.sound); // replay so they can try again
   }
 }
 

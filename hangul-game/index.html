@@ -75,6 +75,11 @@
       margin: 18px 0 6px; transition: transform .1s;
     }
     .speaker:active { transform: scale(.94); }
+    .speaker.speaking { animation: wiggle .5s ease-in-out infinite; }
+    @keyframes wiggle {
+      0%,100% { transform: rotate(-7deg) scale(1.06); }
+      50%     { transform: rotate(7deg) scale(1.06); }
+    }
     .listen-label { font-size: 18px; opacity: .75; margin-bottom: 18px; }
 
     .options {
@@ -127,14 +132,13 @@
     <h1>Hangul Adventure</h1>
     <div class="subtitle">Learn Korean letters! 한글 배우기</div>
     <button id="btn-play" class="btn">▶ Play</button>
-    <div id="tap-status" style="margin-top:18px;font-size:14px;opacity:.6;">build v4 · ready</div>
   </section>
 
   <!-- GAME -->
   <section id="screen-game" class="screen">
     <div class="progress-dots" id="progress-dots"></div>
-    <button id="speaker" class="speaker" aria-label="Play sound">🔊</button>
-    <div class="listen-label">Listen and tap! 👂</div>
+    <button id="speaker" class="speaker" aria-label="Play sound">🐯</button>
+    <div class="listen-label">Tap the tiger to listen! 🎵</div>
     <div class="options" id="options"></div>
     <div class="hint" id="hint"></div>
   </section>
@@ -150,8 +154,8 @@
     </div>
   </section>
 
-  <script src="js/audio.js?v=4"></script>
-  <script src="js/progress.js?v=4"></script>
-  <script src="js/game.js?v=4"></script>
+  <script src="js/audio.js?v=5"></script>
+  <script src="js/progress.js?v=5"></script>
+  <script src="js/game.js?v=5"></script>
 </body>
 </html>
