@@ -57,7 +57,13 @@ function boot() {
     .catch(() => {});
 
   updateStarCount();  // reads localStorage only, no data needed
-  $('#btn-play').addEventListener('click', startGame);
+
+  // Diagnostic: prove taps reach the button in any environment.
+  const status = $('#tap-status');
+  const playBtn = $('#btn-play');
+  playBtn.addEventListener('pointerdown', () => { if (status) status.textContent = 'build v4 · tap received ✓'; });
+
+  playBtn.addEventListener('click', startGame);
   $('#btn-again').addEventListener('click', startGame);
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
   $('#speaker').addEventListener('click', () => AudioPlayer.play(queue[roundIndex].sound));
