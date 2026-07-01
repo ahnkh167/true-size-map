@@ -43,16 +43,18 @@ const FALLBACK_STAGE = {
   ]
 };
 
-let dataReady = null;  // resolves once the stage data is ready
-
 function boot() {
-  // Start loading data, but DON'T wait for it before wiring buttons —
-  // otherwise an early tap on Play (before the fetch resolves) does nothing.
-  // Fall back to the built-in stage if fetch fails (e.g. opened via file://).
-  dataReady = fetch('data/hangul.json')
+  // Set the data SYNCHRONOUSLY so the game is playable the instant the page
+  // loads — no waiting on fetch, no async race, works even from file://.
+  stage = FALLBACK_STAGE;
+
+  // Upgrade to the JSON file in the background if it's reachable (lets us grow
+  // the letter list by editing data only). Failure is harmless — we already
+  // have the built-in stage.
+  fetch('data/hangul.json')
     .then(res => res.json())
-    .then(data => { stage = data.stages[0]; })
-    .catch(() => { stage = FALLBACK_STAGE; });
+    .then(data => { if (data && data.stages && data.stages[0]) stage = data.stages[0]; })
+    .catch(() => {});
 
   updateStarCount();  // reads localStorage only, no data needed
   $('#btn-play').addEventListener('click', startGame);
@@ -65,8 +67,7 @@ function updateStarCount() {
   $('#total-stars').textContent = Progress.totalStars();
 }
 
-async function startGame() {
-  await dataReady;   // make sure letters are loaded (handles early taps)
+function startGame() {
   queue = shuffle(stage.letters).slice(0, ROUNDS);
   // if fewer than ROUNDS letters, repeat to fill
   while (queue.length < ROUNDS) queue.push(shuffle(stage.letters)[0]);
@@ -156,4 +157,10 @@ function burst(el) {
   }
 }
 
-boot();
+// Run boot as soon as the DOM is ready (scripts are at end of <body>, so this
+// is normally immediate — the guard just protects against any load-order quirk).
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', boot);
+} else {
+  boot();
+}
