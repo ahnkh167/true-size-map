@@ -69,6 +69,18 @@
       box-shadow: 0 3px 8px rgba(0,0,0,.12);
     }
 
+    /* in-game back-to-menu button */
+    .back-btn {
+      position: absolute; top: 16px; left: 18px;
+      background: rgba(255,255,255,.85); border: none; cursor: pointer;
+      border-radius: 999px; padding: 8px 16px;
+      font-family: inherit; font-weight: bold; font-size: 15px; color: var(--ink);
+      box-shadow: 0 3px 8px rgba(0,0,0,.12); transition: transform .08s;
+      line-height: 1.1; text-align: left;
+    }
+    .back-btn:active { transform: translateY(2px); }
+    .back-btn .ko { display: block; font-size: 12px; font-weight: normal; opacity: .6; }
+
     /* ---- game screen ---- */
     .progress-dots { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 8px; max-width: min(90vw, 460px); }
     .dot { width: 14px; height: 14px; border-radius: 50%; background: rgba(255,255,255,.55); }
@@ -88,6 +100,7 @@
       50%     { transform: rotate(7deg) scale(1.06); }
     }
     .listen-label { font-size: 18px; opacity: .75; margin-bottom: 18px; }
+    .ko-inline { opacity: .7; font-size: .82em; }
 
     .options {
       display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
@@ -157,22 +170,24 @@
       <button id="btn-vowels" class="btn">Vowels <span class="sub-ko">모음 (10)</span></button>
       <button id="btn-vowels2" class="btn">Complex Vowels <span class="sub-ko">복합 모음 (11)</span></button>
       <button id="btn-consonants" class="btn blue">Consonants <span class="sub-ko">자음 (14)</span></button>
-      <button id="btn-consonants2" class="btn blue">Double <span class="sub-ko">쌍자음 (5)</span></button>
+      <button id="btn-consonants2" class="btn blue">Double Cons. <span class="sub-ko">쌍자음 (5)</span></button>
       <button id="btn-build" class="btn green span2">🧩 Build a Letter <span class="sub-ko">글자 만들기</span></button>
     </div>
   </section>
 
   <!-- GAME -->
   <section id="screen-game" class="screen">
+    <button class="back-btn">← Menu <span class="ko">메뉴</span></button>
     <div class="progress-dots" id="progress-dots"></div>
     <button id="speaker" class="speaker" aria-label="Play sound">🐯</button>
-    <div class="listen-label">Tap the tiger to listen! 🎵</div>
+    <div class="listen-label">Tap the tiger to listen! <span class="ko-inline">호랑이를 눌러요</span> 🎵</div>
     <div class="options" id="options"></div>
     <div class="hint" id="hint"></div>
   </section>
 
   <!-- BUILD A LETTER -->
   <section id="screen-build" class="screen">
+    <button class="back-btn">← Menu <span class="ko">메뉴</span></button>
     <div class="progress-dots" id="build-dots"></div>
     <div class="build-row">
       <span class="build-block" id="build-cons">ㄱ</span>
@@ -182,7 +197,7 @@
       <span class="build-block result" id="build-result">?</span>
     </div>
     <button id="build-speaker" class="speaker" aria-label="Play sound">🐯</button>
-    <div class="listen-label">Pick the vowel! 어떤 모음? 🎵</div>
+    <div class="listen-label">Tap the tiger to hear it! <span class="ko-inline">호랑이를 눌러요</span> 🎵</div>
     <div class="options" id="build-options"></div>
     <div class="hint" id="build-hint"></div>
   </section>
@@ -193,13 +208,13 @@
     <div class="reward-stars" id="reward-stars"></div>
     <div class="reward-msg" id="reward-msg"></div>
     <div class="reward-row">
-      <button id="btn-again" class="btn">↻ Again</button>
-      <button id="btn-home" class="btn blue">🏠 Home</button>
+      <button id="btn-again" class="btn">↻ Again <span class="sub-ko">다시</span></button>
+      <button id="btn-home" class="btn blue">🏠 Menu <span class="sub-ko">처음으로</span></button>
     </div>
   </section>
 
-  <script src="js/audio.js?v=12"></script>
-  <script src="js/progress.js?v=12"></script>
-  <script src="js/game.js?v=12"></script>
+  <script src="js/audio.js?v=13"></script>
+  <script src="js/progress.js?v=13"></script>
+  <script src="js/game.js?v=13"></script>
 </body>
 </html>

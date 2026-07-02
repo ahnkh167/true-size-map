@@ -130,7 +130,7 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=12')
+  fetch('data/hangul.json?v=13')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
@@ -142,13 +142,23 @@ function boot() {
   $('#btn-consonants2').addEventListener('click', () => startGame('consonants-2'));
   $('#btn-build').addEventListener('click', () => startGame('combine-1'));
   $('#btn-again').addEventListener('click', () => startGame(currentStageId));
-  $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
+  $('#btn-home').addEventListener('click', goHome);
+  // in-game "← Menu" buttons on the game and build screens
+  document.querySelectorAll('.back-btn').forEach(b => b.addEventListener('click', goHome));
   $('#speaker').addEventListener('click', () => playSound(queue[roundIndex].sound));
   $('#build-speaker').addEventListener('click', () => playSound(queue[roundIndex].sound, '#build-speaker'));
 }
 
 function updateStarCount() {
   $('#total-stars').textContent = Progress.totalStars();
+}
+
+// Return to the menu, stopping any sound and any in-progress round.
+function goHome() {
+  AudioPlayer.stop();
+  locked = false;
+  updateStarCount();
+  show('start');
 }
 
 // Play a sound and make the tiger wiggle while it "speaks".
