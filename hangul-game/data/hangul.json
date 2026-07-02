@@ -16,6 +16,27 @@
         { "id": "eu",  "char": "ㅡ", "sound": "으", "romaji": "eu",  "hint": "eu — like in g̲oo̲d" },
         { "id": "i",   "char": "ㅣ", "sound": "이", "romaji": "i",   "hint": "ee — like in s̲ee̲" }
       ]
+    },
+    {
+      "id": "consonants-1",
+      "title": "Basic Consonants",
+      "titleKo": "기본 자음",
+      "letters": [
+        { "id": "g",  "char": "ㄱ", "sound": "기역", "romaji": "giyeok", "hint": "g — like in g̲o̲" },
+        { "id": "n",  "char": "ㄴ", "sound": "니은", "romaji": "nieun",  "hint": "n — like in n̲o̲" },
+        { "id": "d",  "char": "ㄷ", "sound": "디귿", "romaji": "digeut", "hint": "d — like in d̲o̲g" },
+        { "id": "r",  "char": "ㄹ", "sound": "리을", "romaji": "rieul",  "hint": "r / l — like in l̲i̲on" },
+        { "id": "m",  "char": "ㅁ", "sound": "미음", "romaji": "mieum",  "hint": "m — like in m̲o̲m" },
+        { "id": "b",  "char": "ㅂ", "sound": "비읍", "romaji": "bieup",  "hint": "b — like in b̲a̲ll" },
+        { "id": "s",  "char": "ㅅ", "sound": "시옷", "romaji": "siot",   "hint": "s — like in s̲u̲n" },
+        { "id": "ng", "char": "ㅇ", "sound": "이응", "romaji": "ieung",  "hint": "silent — 'ng' at the end" },
+        { "id": "j",  "char": "ㅈ", "sound": "지읒", "romaji": "jieut",  "hint": "j — like in j̲u̲mp" },
+        { "id": "ch", "char": "ㅊ", "sound": "치읓", "romaji": "chieut", "hint": "ch — like in ch̲air" },
+        { "id": "k",  "char": "ㅋ", "sound": "키읔", "romaji": "kieuk",  "hint": "k — like in k̲i̲te" },
+        { "id": "t",  "char": "ㅌ", "sound": "티읕", "romaji": "tieut",  "hint": "t — like in t̲o̲y" },
+        { "id": "p",  "char": "ㅍ", "sound": "피읖", "romaji": "pieup",  "hint": "p — like in p̲i̲g" },
+        { "id": "h",  "char": "ㅎ", "sound": "히읗", "romaji": "hieut",  "hint": "h — like in h̲a̲t" }
+      ]
     }
   ]
 }

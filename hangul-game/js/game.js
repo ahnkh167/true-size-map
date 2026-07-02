@@ -1,10 +1,11 @@
 // game.js — Listen & Tap minigame (MVP)
 
 const MASCOT = '🐯';
-const ROUNDS = 5;
 
-let stage = null;          // current stage data
-let queue = [];            // letters to quiz this round-set
+let stages = null;         // all available stages (vowels, consonants)
+let stage = null;          // current stage being played
+let currentStageId = null; // so "Again" replays the same stage
+let queue = [];            // letters to quiz this game
 let roundIndex = 0;
 let mistakes = 0;
 let locked = false;        // block taps during transitions
@@ -30,42 +31,63 @@ function shuffle(arr) {
   return a;
 }
 
-// Built-in copy of the first stage so the game still runs when the page is
+// Built-in copy of the stages so the game still runs when the page is
 // opened directly from disk (file://), where fetch() is blocked by the browser.
-const FALLBACK_STAGE = {
-  id: 'vowels-1', title: 'Basic Vowels', titleKo: '기본 모음',
-  letters: [
-    { id: 'a',   char: 'ㅏ', sound: '아', romaji: 'a',   hint: 'ah — like in f̲a̲ther' },
-    { id: 'ya',  char: 'ㅑ', sound: '야', romaji: 'ya',  hint: 'ya — like in y̲a̲rd' },
-    { id: 'eo',  char: 'ㅓ', sound: '어', romaji: 'eo',  hint: 'uh — like in d̲u̲ck' },
-    { id: 'yeo', char: 'ㅕ', sound: '여', romaji: 'yeo', hint: 'yuh — like in y̲ou̲ng' },
-    { id: 'o',   char: 'ㅗ', sound: '오', romaji: 'o',   hint: 'oh — like in g̲o̲' },
-    { id: 'yo',  char: 'ㅛ', sound: '요', romaji: 'yo',  hint: 'yo — like in y̲o̲ga' },
-    { id: 'u',   char: 'ㅜ', sound: '우', romaji: 'u',   hint: 'oo — like in m̲oo̲n' },
-    { id: 'yu',  char: 'ㅠ', sound: '유', romaji: 'yu',  hint: 'yu — like in y̲ou̲' },
-    { id: 'eu',  char: 'ㅡ', sound: '으', romaji: 'eu',  hint: 'eu — like in g̲oo̲d' },
-    { id: 'i',   char: 'ㅣ', sound: '이', romaji: 'i',   hint: 'ee — like in s̲ee̲' }
-  ]
-};
+const FALLBACK_STAGES = [
+  {
+    id: 'vowels-1', title: 'Basic Vowels', titleKo: '기본 모음',
+    letters: [
+      { id: 'a',   char: 'ㅏ', sound: '아', romaji: 'a',   hint: 'ah — like in f̲a̲ther' },
+      { id: 'ya',  char: 'ㅑ', sound: '야', romaji: 'ya',  hint: 'ya — like in y̲a̲rd' },
+      { id: 'eo',  char: 'ㅓ', sound: '어', romaji: 'eo',  hint: 'uh — like in d̲u̲ck' },
+      { id: 'yeo', char: 'ㅕ', sound: '여', romaji: 'yeo', hint: 'yuh — like in y̲ou̲ng' },
+      { id: 'o',   char: 'ㅗ', sound: '오', romaji: 'o',   hint: 'oh — like in g̲o̲' },
+      { id: 'yo',  char: 'ㅛ', sound: '요', romaji: 'yo',  hint: 'yo — like in y̲o̲ga' },
+      { id: 'u',   char: 'ㅜ', sound: '우', romaji: 'u',   hint: 'oo — like in m̲oo̲n' },
+      { id: 'yu',  char: 'ㅠ', sound: '유', romaji: 'yu',  hint: 'yu — like in y̲ou̲' },
+      { id: 'eu',  char: 'ㅡ', sound: '으', romaji: 'eu',  hint: 'eu — like in g̲oo̲d' },
+      { id: 'i',   char: 'ㅣ', sound: '이', romaji: 'i',   hint: 'ee — like in s̲ee̲' }
+    ]
+  },
+  {
+    id: 'consonants-1', title: 'Basic Consonants', titleKo: '기본 자음',
+    letters: [
+      { id: 'g',  char: 'ㄱ', sound: '기역', romaji: 'giyeok', hint: 'g — like in g̲o̲' },
+      { id: 'n',  char: 'ㄴ', sound: '니은', romaji: 'nieun',  hint: 'n — like in n̲o̲' },
+      { id: 'd',  char: 'ㄷ', sound: '디귿', romaji: 'digeut', hint: 'd — like in d̲o̲g' },
+      { id: 'r',  char: 'ㄹ', sound: '리을', romaji: 'rieul',  hint: 'r / l — like in l̲i̲on' },
+      { id: 'm',  char: 'ㅁ', sound: '미음', romaji: 'mieum',  hint: 'm — like in m̲o̲m' },
+      { id: 'b',  char: 'ㅂ', sound: '비읍', romaji: 'bieup',  hint: 'b — like in b̲a̲ll' },
+      { id: 's',  char: 'ㅅ', sound: '시옷', romaji: 'siot',   hint: 's — like in s̲u̲n' },
+      { id: 'ng', char: 'ㅇ', sound: '이응', romaji: 'ieung',  hint: "silent — 'ng' at the end" },
+      { id: 'j',  char: 'ㅈ', sound: '지읒', romaji: 'jieut',  hint: 'j — like in j̲u̲mp' },
+      { id: 'ch', char: 'ㅊ', sound: '치읓', romaji: 'chieut', hint: 'ch — like in ch̲air' },
+      { id: 'k',  char: 'ㅋ', sound: '키읔', romaji: 'kieuk',  hint: 'k — like in k̲i̲te' },
+      { id: 't',  char: 'ㅌ', sound: '티읕', romaji: 'tieut',  hint: 't — like in t̲o̲y' },
+      { id: 'p',  char: 'ㅍ', sound: '피읖', romaji: 'pieup',  hint: 'p — like in p̲i̲g' },
+      { id: 'h',  char: 'ㅎ', sound: '히읗', romaji: 'hieut',  hint: 'h — like in h̲a̲t' }
+    ]
+  }
+];
 
 function boot() {
   // Set the data SYNCHRONOUSLY so the game is playable the instant the page
   // loads — no waiting on fetch, no async race, works even from file://.
-  stage = FALLBACK_STAGE;
+  stages = FALLBACK_STAGES;
 
   // Upgrade to the JSON file in the background if it's reachable (lets us grow
   // the letter list by editing data only). Failure is harmless — we already
-  // have the built-in stage.
-  // Version the data URL too, so a bumped release never reads a stale cached
-  // copy that would overwrite the (current) built-in stage with old letters.
-  fetch('data/hangul.json?v=7')
+  // have the built-in stages. Version the URL so a stale cached copy can't
+  // overwrite the (current) built-in stages with old letters.
+  fetch('data/hangul.json?v=8')
     .then(res => res.json())
-    .then(data => { if (data && data.stages && data.stages[0]) stage = data.stages[0]; })
+    .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
 
   updateStarCount();  // reads localStorage only, no data needed
-  $('#btn-play').addEventListener('click', startGame);
-  $('#btn-again').addEventListener('click', startGame);
+  $('#btn-vowels').addEventListener('click', () => startGame('vowels-1'));
+  $('#btn-consonants').addEventListener('click', () => startGame('consonants-1'));
+  $('#btn-again').addEventListener('click', () => startGame(currentStageId));
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
   $('#speaker').addEventListener('click', () => playSound(queue[roundIndex].sound));
 }
@@ -85,10 +107,10 @@ function playSound(sound) {
   wiggleTimer = setTimeout(() => tiger.classList.remove('speaking'), 2700);
 }
 
-function startGame() {
-  queue = shuffle(stage.letters).slice(0, ROUNDS);
-  // if fewer than ROUNDS letters, repeat to fill
-  while (queue.length < ROUNDS) queue.push(shuffle(stage.letters)[0]);
+function startGame(stageId) {
+  stage = stages.find(s => s.id === stageId) || stages[0];
+  currentStageId = stage.id;
+  queue = shuffle(stage.letters);   // quiz every letter in the stage, once, in random order
   roundIndex = 0;
   mistakes = 0;
   show('game');
