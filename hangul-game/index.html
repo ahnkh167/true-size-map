@@ -53,6 +53,9 @@
     .btn:active { transform: translateY(4px); box-shadow: 0 2px 0 #d63a68; }
     .btn.blue { background: var(--pop); box-shadow: 0 6px 0 #3a68c0, 0 10px 20px rgba(0,0,0,.15); }
     .btn.blue:active { box-shadow: 0 2px 0 #3a68c0; }
+    .btn.green { background: var(--good); box-shadow: 0 6px 0 #3a8c3e, 0 10px 20px rgba(0,0,0,.15); }
+    .btn.green:active { box-shadow: 0 2px 0 #3a8c3e; }
+    .span2 { grid-column: 1 / -1; }
     .btn .sub-ko { display: block; font-size: 14px; font-weight: normal; opacity: .85; margin-top: 2px; }
 
     .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(92vw, 440px); }
@@ -106,6 +109,21 @@
 
     .hint { margin-top: 20px; font-size: 18px; opacity: .8; min-height: 24px; }
 
+    /* ---- build a letter ---- */
+    .build-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 6px 0 4px; }
+    .build-block {
+      display: flex; align-items: center; justify-content: center;
+      width: clamp(58px, 17vw, 84px); height: clamp(58px, 17vw, 84px);
+      font-size: clamp(34px, 10vw, 52px); font-weight: bold;
+      background: #fff; border-radius: 18px; box-shadow: 0 5px 0 rgba(0,0,0,.14);
+    }
+    .build-block.slot { color: #c9b48f; background: rgba(255,255,255,.6); box-shadow: inset 0 0 0 3px rgba(255,255,255,.8); }
+    .build-block.slot.filled { color: var(--ink); background: #fff; box-shadow: 0 5px 0 rgba(0,0,0,.14); }
+    .build-block.result { color: #c9b48f; background: rgba(255,255,255,.6); box-shadow: inset 0 0 0 3px rgba(255,255,255,.8); }
+    .build-block.result.filled { color: #fff; background: var(--good); box-shadow: 0 5px 0 #3a8c3e; }
+    .build-block.result.pop { animation: pop .5s; }
+    .build-op { font-size: clamp(22px, 6vw, 30px); font-weight: bold; opacity: .6; }
+
     /* ---- reward ---- */
     .reward-stars { display: flex; gap: 12px; margin: 10px 0 6px; }
     .big-star { font-size: clamp(56px, 16vw, 90px); color: rgba(255,255,255,.5); }
@@ -140,6 +158,7 @@
       <button id="btn-vowels2" class="btn">Complex Vowels <span class="sub-ko">복합 모음 (11)</span></button>
       <button id="btn-consonants" class="btn blue">Consonants <span class="sub-ko">자음 (14)</span></button>
       <button id="btn-consonants2" class="btn blue">Double <span class="sub-ko">쌍자음 (5)</span></button>
+      <button id="btn-build" class="btn green span2">🧩 Build a Letter <span class="sub-ko">글자 만들기</span></button>
     </div>
   </section>
 
@@ -150,6 +169,22 @@
     <div class="listen-label">Tap the tiger to listen! 🎵</div>
     <div class="options" id="options"></div>
     <div class="hint" id="hint"></div>
+  </section>
+
+  <!-- BUILD A LETTER -->
+  <section id="screen-build" class="screen">
+    <div class="progress-dots" id="build-dots"></div>
+    <div class="build-row">
+      <span class="build-block" id="build-cons">ㄱ</span>
+      <span class="build-op">+</span>
+      <span class="build-block slot" id="build-vowel">?</span>
+      <span class="build-op">=</span>
+      <span class="build-block result" id="build-result">?</span>
+    </div>
+    <button id="build-speaker" class="speaker" aria-label="Play sound">🐯</button>
+    <div class="listen-label">Pick the vowel! 어떤 모음? 🎵</div>
+    <div class="options" id="build-options"></div>
+    <div class="hint" id="build-hint"></div>
   </section>
 
   <!-- REWARD -->
@@ -163,8 +198,8 @@
     </div>
   </section>
 
-  <script src="js/audio.js?v=10"></script>
-  <script src="js/progress.js?v=10"></script>
-  <script src="js/game.js?v=10"></script>
+  <script src="js/audio.js?v=11"></script>
+  <script src="js/progress.js?v=11"></script>
+  <script src="js/game.js?v=11"></script>
 </body>
 </html>

@@ -14,6 +14,7 @@ const $ = sel => document.querySelector(sel);
 const screens = {
   start:  () => $('#screen-start'),
   game:   () => $('#screen-game'),
+  build:  () => $('#screen-build'),
   reward: () => $('#screen-reward'),
 };
 
@@ -93,6 +94,30 @@ const FALLBACK_STAGES = [
       { id: 'ss', char: 'ㅆ', sound: '싸', romaji: 'ssa', hint: 'ss — strong s̲' },
       { id: 'jj', char: 'ㅉ', sound: '짜', romaji: 'jja', hint: 'jj — strong j̲' }
     ]
+  },
+  {
+    id: 'combine-1', title: 'Build a Letter', titleKo: '글자 만들기', type: 'combine',
+    vowelPool: [
+      { char: 'ㅏ', id: 'a' }, { char: 'ㅓ', id: 'eo' }, { char: 'ㅗ', id: 'o' },
+      { char: 'ㅜ', id: 'u' }, { char: 'ㅣ', id: 'i' }
+    ],
+    items: [
+      { cons: 'ㄱ', vowel: 'ㅏ', vowelId: 'a', syllable: '가', sound: '가' },
+      { cons: 'ㄱ', vowel: 'ㅗ', vowelId: 'o', syllable: '고', sound: '고' },
+      { cons: 'ㄱ', vowel: 'ㅜ', vowelId: 'u', syllable: '구', sound: '구' },
+      { cons: 'ㄴ', vowel: 'ㅏ', vowelId: 'a', syllable: '나', sound: '나' },
+      { cons: 'ㄴ', vowel: 'ㅗ', vowelId: 'o', syllable: '노', sound: '노' },
+      { cons: 'ㄴ', vowel: 'ㅜ', vowelId: 'u', syllable: '누', sound: '누' },
+      { cons: 'ㄷ', vowel: 'ㅏ', vowelId: 'a', syllable: '다', sound: '다' },
+      { cons: 'ㄷ', vowel: 'ㅗ', vowelId: 'o', syllable: '도', sound: '도' },
+      { cons: 'ㄷ', vowel: 'ㅣ', vowelId: 'i', syllable: '디', sound: '디' },
+      { cons: 'ㅁ', vowel: 'ㅏ', vowelId: 'a', syllable: '마', sound: '마' },
+      { cons: 'ㅁ', vowel: 'ㅗ', vowelId: 'o', syllable: '모', sound: '모' },
+      { cons: 'ㅁ', vowel: 'ㅣ', vowelId: 'i', syllable: '미', sound: '미' },
+      { cons: 'ㅂ', vowel: 'ㅏ', vowelId: 'a', syllable: '바', sound: '바' },
+      { cons: 'ㅂ', vowel: 'ㅗ', vowelId: 'o', syllable: '보', sound: '보' },
+      { cons: 'ㅂ', vowel: 'ㅜ', vowelId: 'u', syllable: '부', sound: '부' }
+    ]
   }
 ];
 
@@ -105,7 +130,7 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=10')
+  fetch('data/hangul.json?v=11')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
@@ -115,9 +140,11 @@ function boot() {
   $('#btn-vowels2').addEventListener('click', () => startGame('vowels-2'));
   $('#btn-consonants').addEventListener('click', () => startGame('consonants-1'));
   $('#btn-consonants2').addEventListener('click', () => startGame('consonants-2'));
+  $('#btn-build').addEventListener('click', () => startGame('combine-1'));
   $('#btn-again').addEventListener('click', () => startGame(currentStageId));
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
   $('#speaker').addEventListener('click', () => playSound(queue[roundIndex].sound));
+  $('#build-speaker').addEventListener('click', () => playSound(queue[roundIndex].sound, '#build-speaker'));
 }
 
 function updateStarCount() {
@@ -126,9 +153,9 @@ function updateStarCount() {
 
 // Play a sound and make the tiger wiggle while it "speaks".
 let wiggleTimer = null;
-function playSound(sound) {
+function playSound(sound, tigerSel) {
   AudioPlayer.play(sound);
-  const tiger = $('#speaker');
+  const tiger = $(tigerSel || '#speaker');
   if (!tiger) return;
   tiger.classList.add('speaking');
   clearTimeout(wiggleTimer);
@@ -138,11 +165,17 @@ function playSound(sound) {
 function startGame(stageId) {
   stage = stages.find(s => s.id === stageId) || stages[0];
   currentStageId = stage.id;
-  queue = shuffle(stage.letters);   // quiz every letter in the stage, once, in random order
   roundIndex = 0;
   mistakes = 0;
-  show('game');
-  renderRound();
+  if (stage.type === 'combine') {
+    queue = shuffle(stage.items);   // one round per syllable
+    show('build');
+    renderBuild();
+  } else {
+    queue = shuffle(stage.letters); // quiz every letter once, random order
+    show('game');
+    renderRound();
+  }
 }
 
 function renderRound() {
@@ -189,10 +222,66 @@ function onPick(opt, target, card) {
   }
 }
 
+// ---- Build a Letter (consonant + vowel = syllable) ----
+function renderBuild() {
+  locked = false;
+  const target = queue[roundIndex];
+
+  $('#build-dots').innerHTML = queue
+    .map((_, i) => `<span class="dot ${i < roundIndex ? 'done' : ''} ${i === roundIndex ? 'now' : ''}"></span>`)
+    .join('');
+
+  $('#build-cons').textContent = target.cons;
+  const vslot = $('#build-vowel'); vslot.textContent = '?'; vslot.classList.remove('filled');
+  const rslot = $('#build-result'); rslot.textContent = '?'; rslot.classList.remove('filled', 'pop');
+  $('#build-hint').textContent = 'Pick the vowel! 어떤 모음일까요?';
+
+  // vowel options: the correct one + 2 distractors from the pool
+  const pool = stage.vowelPool;
+  const correct = pool.find(v => v.id === target.vowelId);
+  const distractors = shuffle(pool.filter(v => v.id !== target.vowelId)).slice(0, 2);
+  const options = shuffle([correct, ...distractors]);
+
+  const board = $('#build-options');
+  board.innerHTML = '';
+  options.forEach(opt => {
+    const card = document.createElement('button');
+    card.className = 'letter-card';
+    card.textContent = opt.char;
+    card.addEventListener('click', () => onPickVowel(opt, target, card));
+    board.appendChild(card);
+  });
+
+  setTimeout(() => playSound(target.sound, '#build-speaker'), 350);
+}
+
+function onPickVowel(opt, target, card) {
+  if (locked) return;
+
+  if (opt.id === target.vowelId) {
+    locked = true;
+    card.classList.add('correct');
+    const vslot = $('#build-vowel');
+    vslot.textContent = target.vowel; vslot.classList.add('filled');
+    setTimeout(() => {
+      const rslot = $('#build-result');
+      rslot.textContent = target.syllable; rslot.classList.add('filled', 'pop');
+      playSound(target.sound, '#build-speaker');
+      burst(rslot);
+    }, 320);
+    setTimeout(nextRound, 1500);
+  } else {
+    mistakes++;
+    card.classList.add('wrong');
+    card.addEventListener('animationend', () => card.classList.remove('wrong'), { once: true });
+    playSound(target.sound, '#build-speaker');
+  }
+}
+
 function nextRound() {
   roundIndex++;
   if (roundIndex >= queue.length) return finish();
-  renderRound();
+  if (stage.type === 'combine') renderBuild(); else renderRound();
 }
 
 function finish() {
