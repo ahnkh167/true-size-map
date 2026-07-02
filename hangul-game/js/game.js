@@ -33,13 +33,18 @@ function shuffle(arr) {
 // Built-in copy of the first stage so the game still runs when the page is
 // opened directly from disk (file://), where fetch() is blocked by the browser.
 const FALLBACK_STAGE = {
-  id: 'vowels-1', title: 'First Vowels', titleKo: '첫 모음',
+  id: 'vowels-1', title: 'Basic Vowels', titleKo: '기본 모음',
   letters: [
-    { id: 'a',  char: 'ㅏ', sound: '아', romaji: 'a',  hint: 'ah — like in f̲a̲ther' },
-    { id: 'eo', char: 'ㅓ', sound: '어', romaji: 'eo', hint: 'uh — like in d̲u̲ck' },
-    { id: 'o',  char: 'ㅗ', sound: '오', romaji: 'o',  hint: 'oh — like in g̲o̲' },
-    { id: 'u',  char: 'ㅜ', sound: '우', romaji: 'u',  hint: 'oo — like in m̲oo̲n' },
-    { id: 'i',  char: 'ㅣ', sound: '이', romaji: 'i',  hint: 'ee — like in s̲ee̲' }
+    { id: 'a',   char: 'ㅏ', sound: '아', romaji: 'a',   hint: 'ah — like in f̲a̲ther' },
+    { id: 'ya',  char: 'ㅑ', sound: '야', romaji: 'ya',  hint: 'ya — like in y̲a̲rd' },
+    { id: 'eo',  char: 'ㅓ', sound: '어', romaji: 'eo',  hint: 'uh — like in d̲u̲ck' },
+    { id: 'yeo', char: 'ㅕ', sound: '여', romaji: 'yeo', hint: 'yuh — like in y̲ou̲ng' },
+    { id: 'o',   char: 'ㅗ', sound: '오', romaji: 'o',   hint: 'oh — like in g̲o̲' },
+    { id: 'yo',  char: 'ㅛ', sound: '요', romaji: 'yo',  hint: 'yo — like in y̲o̲ga' },
+    { id: 'u',   char: 'ㅜ', sound: '우', romaji: 'u',   hint: 'oo — like in m̲oo̲n' },
+    { id: 'yu',  char: 'ㅠ', sound: '유', romaji: 'yu',  hint: 'yu — like in y̲ou̲' },
+    { id: 'eu',  char: 'ㅡ', sound: '으', romaji: 'eu',  hint: 'eu — like in g̲oo̲d' },
+    { id: 'i',   char: 'ㅣ', sound: '이', romaji: 'i',   hint: 'ee — like in s̲ee̲' }
   ]
 };
 
