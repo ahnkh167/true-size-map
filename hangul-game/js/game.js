@@ -130,7 +130,7 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=11')
+  fetch('data/hangul.json?v=12')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
@@ -152,14 +152,17 @@ function updateStarCount() {
 }
 
 // Play a sound and make the tiger wiggle while it "speaks".
+// Returns the AudioPlayer promise, which resolves when the sound finishes.
 let wiggleTimer = null;
 function playSound(sound, tigerSel) {
-  AudioPlayer.play(sound);
   const tiger = $(tigerSel || '#speaker');
-  if (!tiger) return;
-  tiger.classList.add('speaking');
-  clearTimeout(wiggleTimer);
-  wiggleTimer = setTimeout(() => tiger.classList.remove('speaking'), 2700);
+  if (tiger) tiger.classList.add('speaking');
+  const stopWiggle = () => { if (tiger) tiger.classList.remove('speaking'); };
+  const p = AudioPlayer.play(sound);
+  p.then(stopWiggle);
+  clearTimeout(wiggleTimer);            // safety net if 'ended' never fires
+  wiggleTimer = setTimeout(stopWiggle, 5000);
+  return p;
 }
 
 function startGame(stageId) {
@@ -263,13 +266,14 @@ function onPickVowel(opt, target, card) {
     card.classList.add('correct');
     const vslot = $('#build-vowel');
     vslot.textContent = target.vowel; vslot.classList.add('filled');
+    // Show the finished syllable big, say it, and only move on once that
+    // sound has fully played — so it never overlaps the next question.
     setTimeout(() => {
       const rslot = $('#build-result');
       rslot.textContent = target.syllable; rslot.classList.add('filled', 'pop');
-      playSound(target.sound, '#build-speaker');
       burst(rslot);
+      playSound(target.sound, '#build-speaker').then(() => setTimeout(nextRound, 500));
     }, 320);
-    setTimeout(nextRound, 1500);
   } else {
     mistakes++;
     card.classList.add('wrong');

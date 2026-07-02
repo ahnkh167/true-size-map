@@ -38,15 +38,34 @@ const AudioPlayer = (() => {
     });
   }
 
-  async function play(sound) {
-    const file = await tryFile(sound);
-    if (file) {
-      file.currentTime = 0;
-      file.play().catch(() => speakTTS(sound));
-    } else {
-      speakTTS(sound);
-    }
+  let currentFile = null;   // the audio element playing right now
+  let playToken = 0;        // guards against overlapping async play() calls
+
+  function stop() {
+    if (currentFile) { try { currentFile.pause(); } catch (e) {} currentFile = null; }
+    if (window.speechSynthesis) speechSynthesis.cancel();
   }
 
-  return { play };
+  // Play a sound, stopping anything already playing first.
+  // Returns a promise that resolves when THIS sound finishes (so callers can
+  // sequence the next sound and avoid overlap).
+  async function play(sound) {
+    const myToken = ++playToken;
+    stop();
+    const file = await tryFile(sound);
+    if (myToken !== playToken) return;   // a newer play() has taken over
+
+    if (!file) { speakTTS(sound); return; }
+
+    currentFile = file;
+    file.currentTime = 0;
+    await new Promise(resolve => {
+      const done = () => { file.removeEventListener('ended', done); resolve(); };
+      file.addEventListener('ended', done, { once: true });
+      file.play().catch(() => { done(); speakTTS(sound); });
+    });
+    if (currentFile === file) currentFile = null;
+  }
+
+  return { play, stop };
 })();
