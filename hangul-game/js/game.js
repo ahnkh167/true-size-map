@@ -56,7 +56,9 @@ function boot() {
   // Upgrade to the JSON file in the background if it's reachable (lets us grow
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stage.
-  fetch('data/hangul.json')
+  // Version the data URL too, so a bumped release never reads a stale cached
+  // copy that would overwrite the (current) built-in stage with old letters.
+  fetch('data/hangul.json?v=7')
     .then(res => res.json())
     .then(data => { if (data && data.stages && data.stages[0]) stage = data.stages[0]; })
     .catch(() => {});
