@@ -18,6 +18,24 @@
       ]
     },
     {
+      "id": "vowels-2",
+      "title": "Complex Vowels",
+      "titleKo": "복합 모음",
+      "letters": [
+        { "id": "ae",  "char": "ㅐ", "sound": "애", "romaji": "ae",  "hint": "ae — like in c̲a̲t" },
+        { "id": "yae", "char": "ㅒ", "sound": "얘", "romaji": "yae", "hint": "yae — like in y̲a̲m" },
+        { "id": "e",   "char": "ㅔ", "sound": "에", "romaji": "e",   "hint": "e — like in b̲e̲d" },
+        { "id": "ye",  "char": "ㅖ", "sound": "예", "romaji": "ye",  "hint": "ye — like in y̲e̲s" },
+        { "id": "wa",  "char": "ㅘ", "sound": "와", "romaji": "wa",  "hint": "wa — like in w̲a̲nt" },
+        { "id": "wae", "char": "ㅙ", "sound": "왜", "romaji": "wae", "hint": "wae — like in w̲e̲t" },
+        { "id": "oe",  "char": "ㅚ", "sound": "외", "romaji": "oe",  "hint": "we — like in w̲e̲igh" },
+        { "id": "wo",  "char": "ㅝ", "sound": "워", "romaji": "wo",  "hint": "wo — like in w̲a̲r" },
+        { "id": "we",  "char": "ㅞ", "sound": "웨", "romaji": "we",  "hint": "we — like in w̲e̲t" },
+        { "id": "wi",  "char": "ㅟ", "sound": "위", "romaji": "wi",  "hint": "wi — like in w̲e̲" },
+        { "id": "ui",  "char": "ㅢ", "sound": "의", "romaji": "ui",  "hint": "ui — like in g̲oo̲ey" }
+      ]
+    },
+    {
       "id": "consonants-1",
       "title": "Basic Consonants",
       "titleKo": "기본 자음",
@@ -36,6 +54,18 @@
         { "id": "t",  "char": "ㅌ", "sound": "타", "romaji": "ta", "hint": "t — like in t̲o̲y" },
         { "id": "p",  "char": "ㅍ", "sound": "파", "romaji": "pa", "hint": "p — like in p̲i̲g" },
         { "id": "h",  "char": "ㅎ", "sound": "하", "romaji": "ha", "hint": "h — like in h̲a̲t" }
+      ]
+    },
+    {
+      "id": "consonants-2",
+      "title": "Double Consonants",
+      "titleKo": "쌍자음",
+      "letters": [
+        { "id": "gg", "char": "ㄲ", "sound": "까", "romaji": "kka", "hint": "kk — strong g̲/k" },
+        { "id": "dd", "char": "ㄸ", "sound": "따", "romaji": "tta", "hint": "tt — strong d̲/t" },
+        { "id": "bb", "char": "ㅃ", "sound": "빠", "romaji": "ppa", "hint": "pp — strong b̲/p" },
+        { "id": "ss", "char": "ㅆ", "sound": "싸", "romaji": "ssa", "hint": "ss — strong s̲" },
+        { "id": "jj", "char": "ㅉ", "sound": "짜", "romaji": "jja", "hint": "jj — strong j̲" }
       ]
     }
   ]

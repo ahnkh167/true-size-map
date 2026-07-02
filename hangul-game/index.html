@@ -55,7 +55,8 @@
     .btn.blue:active { box-shadow: 0 2px 0 #3a68c0; }
     .btn .sub-ko { display: block; font-size: 14px; font-weight: normal; opacity: .85; margin-top: 2px; }
 
-    .choice-row { display: flex; flex-direction: column; gap: 16px; align-items: center; }
+    .choice-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(92vw, 440px); }
+    .choice-row .btn { width: 100%; padding: 16px 10px; font-size: clamp(16px, 4.2vw, 21px); }
 
     /* header star counter */
     .stars-top {
@@ -135,8 +136,10 @@
     <h1>Hangul Adventure</h1>
     <div class="subtitle">Learn Korean letters! 한글 배우기</div>
     <div class="choice-row">
-      <button id="btn-vowels" class="btn">▶ Vowels <span class="sub-ko">모음 (10)</span></button>
-      <button id="btn-consonants" class="btn blue">▶ Consonants <span class="sub-ko">자음 (14)</span></button>
+      <button id="btn-vowels" class="btn">Vowels <span class="sub-ko">모음 (10)</span></button>
+      <button id="btn-vowels2" class="btn">Complex Vowels <span class="sub-ko">복합 모음 (11)</span></button>
+      <button id="btn-consonants" class="btn blue">Consonants <span class="sub-ko">자음 (14)</span></button>
+      <button id="btn-consonants2" class="btn blue">Double <span class="sub-ko">쌍자음 (5)</span></button>
     </div>
   </section>
 
@@ -160,8 +163,8 @@
     </div>
   </section>
 
-  <script src="js/audio.js?v=9"></script>
-  <script src="js/progress.js?v=9"></script>
-  <script src="js/game.js?v=9"></script>
+  <script src="js/audio.js?v=10"></script>
+  <script src="js/progress.js?v=10"></script>
+  <script src="js/game.js?v=10"></script>
 </body>
 </html>

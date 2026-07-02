@@ -50,6 +50,22 @@ const FALLBACK_STAGES = [
     ]
   },
   {
+    id: 'vowels-2', title: 'Complex Vowels', titleKo: '복합 모음',
+    letters: [
+      { id: 'ae',  char: 'ㅐ', sound: '애', romaji: 'ae',  hint: 'ae — like in c̲a̲t' },
+      { id: 'yae', char: 'ㅒ', sound: '얘', romaji: 'yae', hint: 'yae — like in y̲a̲m' },
+      { id: 'e',   char: 'ㅔ', sound: '에', romaji: 'e',   hint: 'e — like in b̲e̲d' },
+      { id: 'ye',  char: 'ㅖ', sound: '예', romaji: 'ye',  hint: 'ye — like in y̲e̲s' },
+      { id: 'wa',  char: 'ㅘ', sound: '와', romaji: 'wa',  hint: 'wa — like in w̲a̲nt' },
+      { id: 'wae', char: 'ㅙ', sound: '왜', romaji: 'wae', hint: 'wae — like in w̲e̲t' },
+      { id: 'oe',  char: 'ㅚ', sound: '외', romaji: 'oe',  hint: 'we — like in w̲e̲igh' },
+      { id: 'wo',  char: 'ㅝ', sound: '워', romaji: 'wo',  hint: 'wo — like in w̲a̲r' },
+      { id: 'we',  char: 'ㅞ', sound: '웨', romaji: 'we',  hint: 'we — like in w̲e̲t' },
+      { id: 'wi',  char: 'ㅟ', sound: '위', romaji: 'wi',  hint: 'wi — like in w̲e̲' },
+      { id: 'ui',  char: 'ㅢ', sound: '의', romaji: 'ui',  hint: 'ui — like in g̲oo̲ey' }
+    ]
+  },
+  {
     id: 'consonants-1', title: 'Basic Consonants', titleKo: '기본 자음',
     letters: [
       { id: 'g',  char: 'ㄱ', sound: '가', romaji: 'ga', hint: 'g — like in g̲o̲' },
@@ -67,6 +83,16 @@ const FALLBACK_STAGES = [
       { id: 'p',  char: 'ㅍ', sound: '파', romaji: 'pa', hint: 'p — like in p̲i̲g' },
       { id: 'h',  char: 'ㅎ', sound: '하', romaji: 'ha', hint: 'h — like in h̲a̲t' }
     ]
+  },
+  {
+    id: 'consonants-2', title: 'Double Consonants', titleKo: '쌍자음',
+    letters: [
+      { id: 'gg', char: 'ㄲ', sound: '까', romaji: 'kka', hint: 'kk — strong g̲/k' },
+      { id: 'dd', char: 'ㄸ', sound: '따', romaji: 'tta', hint: 'tt — strong d̲/t' },
+      { id: 'bb', char: 'ㅃ', sound: '빠', romaji: 'ppa', hint: 'pp — strong b̲/p' },
+      { id: 'ss', char: 'ㅆ', sound: '싸', romaji: 'ssa', hint: 'ss — strong s̲' },
+      { id: 'jj', char: 'ㅉ', sound: '짜', romaji: 'jja', hint: 'jj — strong j̲' }
+    ]
   }
 ];
 
@@ -79,14 +105,16 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=9')
+  fetch('data/hangul.json?v=10')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
 
   updateStarCount();  // reads localStorage only, no data needed
   $('#btn-vowels').addEventListener('click', () => startGame('vowels-1'));
+  $('#btn-vowels2').addEventListener('click', () => startGame('vowels-2'));
   $('#btn-consonants').addEventListener('click', () => startGame('consonants-1'));
+  $('#btn-consonants2').addEventListener('click', () => startGame('consonants-2'));
   $('#btn-again').addEventListener('click', () => startGame(currentStageId));
   $('#btn-home').addEventListener('click', () => { updateStarCount(); show('start'); });
   $('#speaker').addEventListener('click', () => playSound(queue[roundIndex].sound));
