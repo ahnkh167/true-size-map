@@ -97,26 +97,49 @@ const FALLBACK_STAGES = [
   },
   {
     id: 'combine-1', title: 'Build a Letter', titleKo: '글자 만들기', type: 'combine',
-    vowelPool: [
+    prompt: 'Pick the vowel! 모음을 골라요',
+    pool: [
       { char: 'ㅏ', id: 'a' }, { char: 'ㅓ', id: 'eo' }, { char: 'ㅗ', id: 'o' },
       { char: 'ㅜ', id: 'u' }, { char: 'ㅣ', id: 'i' }
     ],
     items: [
-      { cons: 'ㄱ', vowel: 'ㅏ', vowelId: 'a', syllable: '가', sound: '가' },
-      { cons: 'ㄱ', vowel: 'ㅗ', vowelId: 'o', syllable: '고', sound: '고' },
-      { cons: 'ㄱ', vowel: 'ㅜ', vowelId: 'u', syllable: '구', sound: '구' },
-      { cons: 'ㄴ', vowel: 'ㅏ', vowelId: 'a', syllable: '나', sound: '나' },
-      { cons: 'ㄴ', vowel: 'ㅗ', vowelId: 'o', syllable: '노', sound: '노' },
-      { cons: 'ㄴ', vowel: 'ㅜ', vowelId: 'u', syllable: '누', sound: '누' },
-      { cons: 'ㄷ', vowel: 'ㅏ', vowelId: 'a', syllable: '다', sound: '다' },
-      { cons: 'ㄷ', vowel: 'ㅗ', vowelId: 'o', syllable: '도', sound: '도' },
-      { cons: 'ㄷ', vowel: 'ㅣ', vowelId: 'i', syllable: '디', sound: '디' },
-      { cons: 'ㅁ', vowel: 'ㅏ', vowelId: 'a', syllable: '마', sound: '마' },
-      { cons: 'ㅁ', vowel: 'ㅗ', vowelId: 'o', syllable: '모', sound: '모' },
-      { cons: 'ㅁ', vowel: 'ㅣ', vowelId: 'i', syllable: '미', sound: '미' },
-      { cons: 'ㅂ', vowel: 'ㅏ', vowelId: 'a', syllable: '바', sound: '바' },
-      { cons: 'ㅂ', vowel: 'ㅗ', vowelId: 'o', syllable: '보', sound: '보' },
-      { cons: 'ㅂ', vowel: 'ㅜ', vowelId: 'u', syllable: '부', sound: '부' }
+      { base: 'ㄱ', pick: 'ㅏ', pickId: 'a', syllable: '가', sound: '가' },
+      { base: 'ㄱ', pick: 'ㅗ', pickId: 'o', syllable: '고', sound: '고' },
+      { base: 'ㄱ', pick: 'ㅜ', pickId: 'u', syllable: '구', sound: '구' },
+      { base: 'ㄴ', pick: 'ㅏ', pickId: 'a', syllable: '나', sound: '나' },
+      { base: 'ㄴ', pick: 'ㅗ', pickId: 'o', syllable: '노', sound: '노' },
+      { base: 'ㄴ', pick: 'ㅜ', pickId: 'u', syllable: '누', sound: '누' },
+      { base: 'ㄷ', pick: 'ㅏ', pickId: 'a', syllable: '다', sound: '다' },
+      { base: 'ㄷ', pick: 'ㅗ', pickId: 'o', syllable: '도', sound: '도' },
+      { base: 'ㄷ', pick: 'ㅣ', pickId: 'i', syllable: '디', sound: '디' },
+      { base: 'ㅁ', pick: 'ㅏ', pickId: 'a', syllable: '마', sound: '마' },
+      { base: 'ㅁ', pick: 'ㅗ', pickId: 'o', syllable: '모', sound: '모' },
+      { base: 'ㅁ', pick: 'ㅣ', pickId: 'i', syllable: '미', sound: '미' },
+      { base: 'ㅂ', pick: 'ㅏ', pickId: 'a', syllable: '바', sound: '바' },
+      { base: 'ㅂ', pick: 'ㅗ', pickId: 'o', syllable: '보', sound: '보' },
+      { base: 'ㅂ', pick: 'ㅜ', pickId: 'u', syllable: '부', sound: '부' }
+    ]
+  },
+  {
+    id: 'combine-2', title: 'Build with Batchim', titleKo: '받침 글자 만들기', type: 'combine',
+    prompt: 'Pick the last part! 받침을 골라요',
+    pool: [
+      { char: 'ㄱ', id: 'g' }, { char: 'ㄴ', id: 'n' }, { char: 'ㄹ', id: 'r' },
+      { char: 'ㅁ', id: 'm' }, { char: 'ㅂ', id: 'b' }, { char: 'ㅇ', id: 'ng' }
+    ],
+    items: [
+      { base: '가', pick: 'ㅇ', pickId: 'ng', syllable: '강', sound: '강' },
+      { base: '사', pick: 'ㄴ', pickId: 'n',  syllable: '산', sound: '산' },
+      { base: '바', pick: 'ㅂ', pickId: 'b',  syllable: '밥', sound: '밥' },
+      { base: '무', pick: 'ㄹ', pickId: 'r',  syllable: '물', sound: '물' },
+      { base: '고', pick: 'ㅁ', pickId: 'm',  syllable: '곰', sound: '곰' },
+      { base: '무', pick: 'ㄴ', pickId: 'n',  syllable: '문', sound: '문' },
+      { base: '고', pick: 'ㅇ', pickId: 'ng', syllable: '공', sound: '공' },
+      { base: '누', pick: 'ㄴ', pickId: 'n',  syllable: '눈', sound: '눈' },
+      { base: '모', pick: 'ㄱ', pickId: 'g',  syllable: '목', sound: '목' },
+      { base: '기', pick: 'ㅁ', pickId: 'm',  syllable: '김', sound: '김' },
+      { base: '바', pick: 'ㄹ', pickId: 'r',  syllable: '발', sound: '발' },
+      { base: '다', pick: 'ㅁ', pickId: 'm',  syllable: '담', sound: '담' }
     ]
   }
 ];
@@ -130,7 +153,7 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=13')
+  fetch('data/hangul.json?v=14')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
@@ -141,6 +164,7 @@ function boot() {
   $('#btn-consonants').addEventListener('click', () => startGame('consonants-1'));
   $('#btn-consonants2').addEventListener('click', () => startGame('consonants-2'));
   $('#btn-build').addEventListener('click', () => startGame('combine-1'));
+  $('#btn-batchim').addEventListener('click', () => startGame('combine-2'));
   $('#btn-again').addEventListener('click', () => startGame(currentStageId));
   $('#btn-home').addEventListener('click', goHome);
   // in-game "← Menu" buttons on the game and build screens
@@ -244,15 +268,15 @@ function renderBuild() {
     .map((_, i) => `<span class="dot ${i < roundIndex ? 'done' : ''} ${i === roundIndex ? 'now' : ''}"></span>`)
     .join('');
 
-  $('#build-cons').textContent = target.cons;
+  $('#build-cons').textContent = target.base;
   const vslot = $('#build-vowel'); vslot.textContent = '?'; vslot.classList.remove('filled');
   const rslot = $('#build-result'); rslot.textContent = '?'; rslot.classList.remove('filled', 'pop');
-  $('#build-hint').textContent = 'Pick the vowel! 어떤 모음일까요?';
+  $('#build-hint').textContent = stage.prompt || 'Pick the vowel!';
 
-  // vowel options: the correct one + 2 distractors from the pool
-  const pool = stage.vowelPool;
-  const correct = pool.find(v => v.id === target.vowelId);
-  const distractors = shuffle(pool.filter(v => v.id !== target.vowelId)).slice(0, 2);
+  // options: the correct part + 2 distractors from the pool
+  const pool = stage.pool;
+  const correct = pool.find(v => v.id === target.pickId);
+  const distractors = shuffle(pool.filter(v => v.id !== target.pickId)).slice(0, 2);
   const options = shuffle([correct, ...distractors]);
 
   const board = $('#build-options');
@@ -271,11 +295,11 @@ function renderBuild() {
 function onPickVowel(opt, target, card) {
   if (locked) return;
 
-  if (opt.id === target.vowelId) {
+  if (opt.id === target.pickId) {
     locked = true;
     card.classList.add('correct');
     const vslot = $('#build-vowel');
-    vslot.textContent = target.vowel; vslot.classList.add('filled');
+    vslot.textContent = target.pick; vslot.classList.add('filled');
     // Show the finished syllable big, say it, and only move on once that
     // sound has fully played — so it never overlaps the next question.
     setTimeout(() => {
