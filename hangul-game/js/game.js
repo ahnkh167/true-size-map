@@ -141,6 +141,50 @@ const FALLBACK_STAGES = [
       { base: '바', pick: 'ㄹ', pickId: 'r',  syllable: '발', sound: '발' },
       { base: '다', pick: 'ㅁ', pickId: 'm',  syllable: '담', sound: '담' }
     ]
+  },
+  {
+    id: 'combine-3', title: 'Double Consonant Build', titleKo: '쌍자음 글자 만들기', type: 'combine',
+    prompt: 'Pick the vowel! 모음을 골라요',
+    pool: [
+      { char: 'ㅏ', id: 'a' }, { char: 'ㅓ', id: 'eo' }, { char: 'ㅗ', id: 'o' },
+      { char: 'ㅜ', id: 'u' }, { char: 'ㅣ', id: 'i' }
+    ],
+    items: [
+      { base: 'ㄲ', pick: 'ㅏ', pickId: 'a', syllable: '까', sound: '까' },
+      { base: 'ㄲ', pick: 'ㅗ', pickId: 'o', syllable: '꼬', sound: '꼬' },
+      { base: 'ㄲ', pick: 'ㅜ', pickId: 'u', syllable: '꾸', sound: '꾸' },
+      { base: 'ㄸ', pick: 'ㅏ', pickId: 'a', syllable: '따', sound: '따' },
+      { base: 'ㄸ', pick: 'ㅗ', pickId: 'o', syllable: '또', sound: '또' },
+      { base: 'ㄸ', pick: 'ㅜ', pickId: 'u', syllable: '뚜', sound: '뚜' },
+      { base: 'ㅃ', pick: 'ㅏ', pickId: 'a', syllable: '빠', sound: '빠' },
+      { base: 'ㅃ', pick: 'ㅗ', pickId: 'o', syllable: '뽀', sound: '뽀' },
+      { base: 'ㅃ', pick: 'ㅜ', pickId: 'u', syllable: '뿌', sound: '뿌' },
+      { base: 'ㅆ', pick: 'ㅏ', pickId: 'a', syllable: '싸', sound: '싸' },
+      { base: 'ㅆ', pick: 'ㅗ', pickId: 'o', syllable: '쏘', sound: '쏘' },
+      { base: 'ㅆ', pick: 'ㅜ', pickId: 'u', syllable: '쑤', sound: '쑤' },
+      { base: 'ㅉ', pick: 'ㅏ', pickId: 'a', syllable: '짜', sound: '짜' },
+      { base: 'ㅉ', pick: 'ㅗ', pickId: 'o', syllable: '쪼', sound: '쪼' },
+      { base: 'ㅉ', pick: 'ㅜ', pickId: 'u', syllable: '쭈', sound: '쭈' }
+    ]
+  },
+  {
+    id: 'combine-4', title: 'Complex Vowel Build', titleKo: '복합모음 글자 만들기', type: 'combine',
+    prompt: 'Pick the vowel! 모음을 골라요',
+    pool: [
+      { char: 'ㅐ', id: 'ae' }, { char: 'ㅘ', id: 'wa' }, { char: 'ㅚ', id: 'oe' }, { char: 'ㅟ', id: 'wi' }
+    ],
+    items: [
+      { base: 'ㄱ', pick: 'ㅐ', pickId: 'ae', syllable: '개', sound: '개' },
+      { base: 'ㅂ', pick: 'ㅐ', pickId: 'ae', syllable: '배', sound: '배' },
+      { base: 'ㅅ', pick: 'ㅐ', pickId: 'ae', syllable: '새', sound: '새' },
+      { base: 'ㅁ', pick: 'ㅐ', pickId: 'ae', syllable: '매', sound: '매' },
+      { base: 'ㄱ', pick: 'ㅘ', pickId: 'wa', syllable: '과', sound: '과' },
+      { base: 'ㅎ', pick: 'ㅘ', pickId: 'wa', syllable: '화', sound: '화' },
+      { base: 'ㄱ', pick: 'ㅟ', pickId: 'wi', syllable: '귀', sound: '귀' },
+      { base: 'ㄷ', pick: 'ㅟ', pickId: 'wi', syllable: '뒤', sound: '뒤' },
+      { base: 'ㄷ', pick: 'ㅚ', pickId: 'oe', syllable: '되', sound: '되' },
+      { base: 'ㅎ', pick: 'ㅚ', pickId: 'oe', syllable: '회', sound: '회' }
+    ]
   }
 ];
 
@@ -153,7 +197,7 @@ function boot() {
   // the letter list by editing data only). Failure is harmless — we already
   // have the built-in stages. Version the URL so a stale cached copy can't
   // overwrite the (current) built-in stages with old letters.
-  fetch('data/hangul.json?v=14')
+  fetch('data/hangul.json?v=15')
     .then(res => res.json())
     .then(data => { if (data && Array.isArray(data.stages) && data.stages.length) stages = data.stages; })
     .catch(() => {});
@@ -165,6 +209,8 @@ function boot() {
   $('#btn-consonants2').addEventListener('click', () => startGame('consonants-2'));
   $('#btn-build').addEventListener('click', () => startGame('combine-1'));
   $('#btn-batchim').addEventListener('click', () => startGame('combine-2'));
+  $('#btn-build-double').addEventListener('click', () => startGame('combine-3'));
+  $('#btn-build-complex').addEventListener('click', () => startGame('combine-4'));
   $('#btn-again').addEventListener('click', () => startGame(currentStageId));
   $('#btn-home').addEventListener('click', goHome);
   // in-game "← Menu" buttons on the game and build screens
